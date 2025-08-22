@@ -5,6 +5,7 @@ import base64
 import io
 import json
 import logging
+import os
 import wave
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -29,7 +30,13 @@ class ConversationAnalyzer:
             scenario_dir: Directory containing evaluation scenario files
         """
         if scenario_dir is None:
-            self.scenario_dir = Path(__file__).parent / "scenarios"
+            docker_path = Path("/app/data/scenarios")
+            if docker_path.exists():
+                self.scenario_dir = docker_path
+            else:
+                self.scenario_dir = (
+                    Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
+                )
         else:
             self.scenario_dir = scenario_dir
         self.evaluation_scenarios = self._load_evaluation_scenarios()
@@ -290,6 +297,34 @@ class PronunciationAssessor:
         """Initialize the pronunciation assessor."""
         self.speech_key = config["azure_speech_key"]
         self.speech_region = config["azure_speech_region"]
+        self._is_docker = self._detect_docker_environment()
+        self._platform_available = None  # Will be set on first use
+        
+    def _detect_docker_environment(self) -> bool:
+        """Detect if running in a Docker container."""
+        try:
+            # Check for Docker-specific indicators
+            with open('/proc/1/cgroup', 'r') as f:
+                return 'docker' in f.read() or 'containerd' in f.read()
+        except (FileNotFoundError, PermissionError):
+            # Fallback: check for other Docker indicators
+            return (
+                os.path.exists('/.dockerenv') or 
+                os.environ.get('DOCKER_CONTAINER') == 'true'
+            )
+    
+    def _create_mock_assessment(self) -> Dict[str, Any]:
+        """Create a mock pronunciation assessment when Speech SDK is unavailable."""
+        return {
+            "accuracy_score": 85.0,
+            "fluency_score": 80.0, 
+            "completeness_score": 90.0,
+            "prosody_score": 75.0,
+            "pronunciation_score": 82.5,
+            "words": [],
+            "mock_data": True,
+            "reason": "Speech SDK unavailable in Docker environment"
+        }
 
     async def assess_pronunciation(
         self, audio_data: List[Dict[str, Any]], reference_text: Optional[str] = None
@@ -314,6 +349,12 @@ class PronunciationAssessor:
             if not combined_audio:
                 logger.error("No audio data to assess")
                 return None
+
+            logger.info(f"Combined audio size: {len(combined_audio)} bytes")
+
+            # Check minimum audio length (at least 1 second of 24kHz 16-bit mono audio = 48000 bytes)
+            if len(combined_audio) < 48000:
+                logger.warning(f"Audio might be too short: {len(combined_audio)} bytes")
 
             # Create WAV format audio
             wav_audio = self._create_wav_audio(combined_audio)
@@ -356,6 +397,13 @@ class PronunciationAssessor:
         self, wav_audio: bytes, reference_text: Optional[str]
     ) -> Optional[Dict[str, Any]]:
         """Perform the actual pronunciation assessment."""
+        logger.info(
+            f"Starting pronunciation assessment with audio size: {len(wav_audio)} bytes"
+        )
+        logger.info(f"Reference text: {reference_text or 'None'}")
+        logger.info(f"Speech key configured: {'Yes' if self.speech_key else 'No'}")
+        logger.info(f"Speech region: {self.speech_region}")
+
         # Create speech configuration
         speech_config = speechsdk.SpeechConfig(
             subscription=self.speech_key, region=self.speech_region
@@ -406,9 +454,22 @@ class PronunciationAssessor:
                 "pronunciation_score": pronunciation_result.pronunciation_score,
                 "words": self._extract_word_details(result),
             }
-
-        logger.error(f"Speech recognition failed: {result.reason}")
-        return None
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = speechsdk.CancellationDetails(result)
+            logger.error(f"Speech recognition canceled: {cancellation_details.reason}")
+            
+            if hasattr(cancellation_details, 'error_code'):
+                logger.error(f"Error code: {cancellation_details.error_code}")
+            
+            if hasattr(cancellation_details, 'error_details'):
+                logger.error(f"Error details: {cancellation_details.error_details}")
+            
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                logger.error("Authentication or configuration error likely")
+            return None
+        else:
+            logger.error(f"Speech recognition failed: {result.reason}")
+            return None
 
     def _extract_word_details(self, result) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""

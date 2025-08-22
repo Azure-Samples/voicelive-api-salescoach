@@ -3,20 +3,20 @@
 import asyncio
 import logging
 import os
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 from flask_sock import Sock
 
 from config import config
-from managers import TokenManager, ScenarioManager, AgentManager
-from analyzers import ConversationAnalyzer, PronunciationAssessor
-from websocket_handler import VoiceProxyHandler
+from services.managers import TokenManager, ScenarioManager, AgentManager
+from services.analyzers import ConversationAnalyzer, PronunciationAssessor
+from services.websocket_handler import VoiceProxyHandler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize Flask application
-app = Flask(__name__, static_folder="static", template_folder="templates")
+app = Flask(__name__, static_folder="../static", static_url_path="")
 sock = Sock(app)
 
 # Initialize managers and analyzers
@@ -31,7 +31,7 @@ voice_proxy_handler = VoiceProxyHandler(token_manager, agent_manager)
 @app.route("/")
 def index():
     """Serve the main application page."""
-    return render_template("index.html")
+    return send_from_directory(app.static_folder, "index.html")
 
 
 @app.route("/api/config")
@@ -102,12 +102,10 @@ def analyze_conversation():
     if not scenario_id or not transcript:
         return jsonify({"error": "scenario_id and transcript are required"}), 400
 
-    # Run async analysis tasks
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
-        # Run both analyses in parallel
         tasks = [
             conversation_analyzer.analyze_conversation(scenario_id, transcript),
             pronunciation_assessor.assess_pronunciation(audio_data, transcript),
@@ -119,7 +117,6 @@ def analyze_conversation():
 
         ai_assessment, pronunciation = results
 
-        # Handle any exceptions
         if isinstance(ai_assessment, Exception):
             logger.error(f"AI assessment failed: {ai_assessment}")
             ai_assessment = None
@@ -136,12 +133,6 @@ def analyze_conversation():
         loop.close()
 
 
-@app.route("/static/<path:path>")
-def send_static(path):
-    """Serve static files."""
-    return send_from_directory("static", path)
-
-
 @app.route("/audio-processor.js")
 def audio_processor():
     """Serve the audio processor JavaScript file."""
@@ -153,21 +144,18 @@ def voice_proxy(ws):
     """WebSocket endpoint for voice proxy."""
     logger.info("New WebSocket connection")
 
-    # Get or create event loop
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    # Handle the connection
     loop.run_until_complete(voice_proxy_handler.handle_connection(ws))
 
 
 def main():
     """Run the Flask application."""
     print(f"Starting Voice Live Demo on http://{config['host']}:{config['port']}")
-    # Check if we're running in development mode based on environment
     debug_mode = os.getenv("FLASK_ENV") == "development"
     app.run(
         host=config["host"],

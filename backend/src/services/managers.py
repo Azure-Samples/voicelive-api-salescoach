@@ -62,7 +62,13 @@ class ScenarioManager:
             scenario_dir: Directory containing scenario YAML files
         """
         if scenario_dir is None:
-            self.scenario_dir = Path(__file__).parent / "scenarios"
+            docker_path = Path("/app/data/scenarios")
+            if docker_path.exists():
+                self.scenario_dir = docker_path
+            else:
+                self.scenario_dir = (
+                    Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
+                )
         else:
             self.scenario_dir = scenario_dir
 

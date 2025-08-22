@@ -7,11 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "./lint.sh",
-    "format": "./format.sh",
-    "test": "python -m pytest",
-    "test:coverage": "python -m pytest --cov=app --cov-report=term-missing",
-    "test:watch": "python -m pytest --watch"
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@eslint/js": "^9.33.0",

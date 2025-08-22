@@ -6,14 +6,18 @@ set -e
 
 echo "🔧 Formatting Python code..."
 
-# Run black
-echo "Running black..."
+# Run black on backend
+echo "Running black on backend..."
+cd backend
 black . --config pyproject.toml
+cd ..
 
 echo "🔧 Formatting TypeScript code..."
 
-# Run Prettier
-echo "Running prettier..."
+# Run Prettier on frontend
+echo "Running prettier on frontend..."
+cd frontend
 npx prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+cd ..
 
 echo "✅ All code formatted!"

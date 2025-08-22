@@ -121,8 +121,8 @@ dist
 # Build outputs
 dist/
 build/
-static/js/
-static/assets/
+frontend/static/
+backend/static/
 
 # Log files
 *.log
@@ -159,6 +159,11 @@ Thumbs.db
 *.swo
 *~
 
+
 # Temporary files
 *.tmp
 *.temp
+
+.pytest_cache
+.azure
+static

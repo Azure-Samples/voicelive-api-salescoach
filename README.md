@@ -8,7 +8,7 @@
   <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" /></a>
 </p>
 
-![VoiceLab Sales Trainer in Action](assets/preview.png)
+![VoiceLab Sales Trainer in Action](docs/assets/preview.png)
 
 ---
 
@@ -23,7 +23,7 @@ VoiceLab Sales Trainer is a demo application showcasing how AI-based training co
 - **Pronunciation Assessment** - Improve your speaking clarity and confidence with Azure Speech Services
 - **Scoring System** - Track your progress with metrics
 
-![Performance Analysis Dashboard](assets/analysis.png)
+![Performance Analysis Dashboard](docs/assets/analysis.png)
 
 ### Tech Stack
 
@@ -52,7 +52,7 @@ VoiceLab Sales Trainer is a demo application showcasing how AI-based training co
 
 2. **Set up environment variables**
    ```bash
-   cp .env.example .env
+   cp config/.env.example .env
    # Edit .env with your Azure credentials
    ```
 
@@ -77,29 +77,42 @@ Visit `http://localhost:8000` to start training!
    cd voicelive-api-salescoach
    ```
 
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Azure-Samples/voicelive-api-salescoach.git
+   cd voicelive-api-salescoach
+   ```
+
 2. **Set up environment variables**
    ```bash
-   cp .env.example .env
+   cp config/.env.example .env
    # Edit .env with your Azure credentials
    ```
 
 3. **Install dependencies**
    ```bash
-   # Python dependencies
+   # Backend dependencies
+   cd backend
    pip install -r requirements.txt
+   cd ..
    
    # Frontend dependencies
-   npm install --legacy-peer-deps
+   cd frontend
+   npm install
+   cd ..
    ```
 
 4. **Build the frontend**
    ```bash
+   cd frontend
    npm run build
+   cd ..
    ```
 
 5. **Start the application**
    ```bash
-   python app.py
+   cd backend
+   python src/app.py
    ```
 
 Visit `http://localhost:8000` to start training!
@@ -169,7 +182,7 @@ npx prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}"
 
 The following diagram shows the high-level architecture of VoiceLab Sales Trainer and how it integrates with various Azure AI services:
 
-![Architecture Diagram](assets/architecture.png)
+![Architecture Diagram](docs/assets/architecture.png)
 
 ## Contributing
 

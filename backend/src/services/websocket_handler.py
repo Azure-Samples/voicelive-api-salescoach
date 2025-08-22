@@ -9,7 +9,7 @@ from typing import Optional
 import websockets
 
 from config import config
-from managers import AgentManager
+from services.managers import AgentManager
 
 logger = logging.getLogger(__name__)
 
@@ -86,15 +86,13 @@ class VoiceProxyHandler:
             agent_config = self.agent_manager.get_agent(agent_id) if agent_id else None
 
             azure_url = self._build_azure_url(agent_id, agent_config)
-            
+
             api_key = config.get("azure_openai_api_key")
             if not api_key:
                 logger.error("No API key found in configuration (azure_openai_api_key)")
                 return None
 
-            headers = {
-                "api-key": api_key
-            }
+            headers = {"api-key": api_key}
 
             azure_ws = await websockets.connect(azure_url, extra_headers=headers)
             logger.info(

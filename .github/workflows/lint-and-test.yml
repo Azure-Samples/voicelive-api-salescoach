@@ -1,0 +1,88 @@
+name: Lint and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  python-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+
+    - name: Lint Python code
+      working-directory: ./backend
+      run: |
+        echo "Running flake8..."
+        flake8 . --config=.flake8
+
+    - name: Check Python code formatting
+      working-directory: ./backend
+      run: |
+        echo "Checking black formatting..."
+        black . --check --config pyproject.toml
+
+    - name: Run Python tests
+      working-directory: ./backend
+      env:
+        PYTHONPATH: src:src/services
+      run: |
+        python -m pytest -v
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+
+    - name: Install Node.js dependencies
+      working-directory: ./frontend
+      run: |
+        npm install
+
+    - name: Lint TypeScript code
+      working-directory: ./frontend
+      run: |
+        echo "Running ESLint..."
+        npm run lint
+
+    - name: Check TypeScript code formatting
+      working-directory: ./frontend
+      run: |
+        echo "Checking prettier formatting..."
+        npm run format:check
+
+    - name: Build TypeScript
+      working-directory: ./frontend
+      run: |
+        npm run build

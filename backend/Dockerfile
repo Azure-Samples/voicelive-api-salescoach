@@ -7,30 +7,31 @@ WORKDIR /app
 # Configure npm to bypass SSL issues in build environment
 RUN npm config set strict-ssl false
 
-# Copy package files and install dependencies
-COPY package*.json ./
+# Copy frontend package files and install dependencies
+COPY frontend/package*.json ./
 RUN npm ci --legacy-peer-deps --include=dev
 
-# Copy source code and build frontend
-COPY src/ ./src/
-COPY index.html ./
-COPY vite.config.ts ./
-COPY tsconfig.json ./
-COPY tsconfig.node.json ./
-COPY eslint.config.js ./
-COPY .prettierrc ./
-COPY .prettierignore ./
+# Copy frontend source code and build
+COPY frontend/src/ ./src/
+COPY frontend/public/ ./public/
+COPY frontend/index.html ./
+COPY frontend/vite.config.ts ./
+COPY frontend/tsconfig.json ./
+COPY frontend/tsconfig.node.json ./
+COPY frontend/eslint.config.js ./
+COPY frontend/.prettierrc ./
+COPY frontend/.prettierignore ./
 
 # Build the frontend
 RUN npx --yes tsc && npx --yes vite build
 
-# Stage 2: Python runtime
-FROM python:3.11-slim
+# Stage 2: Python runtime (using Ubuntu 20.04 base to avoid OpenSSL 3 issues)
+FROM python:3.11-slim-bullseye
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_APP=app.py \
+    FLASK_APP=src/app.py \
     FLASK_ENV=production \
     PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org pypi.python.org" \
     PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -40,6 +41,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     ca-certificates \
+    libasound2 \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -49,13 +51,12 @@ RUN useradd --create-home --shell /bin/bash app
 WORKDIR /app
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt ./
+COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
 
 # Copy application code
-COPY --chown=app:app *.py ./
-COPY --chown=app:app templates/ ./templates/
-COPY --chown=app:app scenarios/ ./scenarios/
+COPY --chown=app:app backend/src/ ./src/
+COPY --chown=app:app data/scenarios/ ./data/scenarios/
 
 # Copy built frontend from previous stage
 COPY --from=frontend-builder --chown=app:app /app/static/ ./static/
@@ -71,4 +72,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/config || exit 1
 
 # Start the application
-CMD ["python", "app.py"]
+CMD ["python", "src/app.py"]

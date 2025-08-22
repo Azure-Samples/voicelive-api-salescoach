@@ -1,6 +1,7 @@
 {
     "name": "voicelive-api-salescoach",
     "image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
+    "forwardPorts": [50505],
     "features": {
         "ghcr.io/devcontainers/features/azure-cli:1.2.7": {},
         "ghcr.io/azure/azure-dev/azd:latest": {},

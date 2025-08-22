@@ -17,7 +17,7 @@ class TestVoiceProxyHandler:
 
         handler = VoiceProxyHandler(token_manager, agent_manager)
 
-        assert handler.token_manager == token_manager
+        # token_manager is kept for compatibility but not stored as instance variable
         assert handler.agent_manager == agent_manager
 
     @patch("websocket_handler.config")
@@ -31,9 +31,9 @@ class TestVoiceProxyHandler:
         handler = VoiceProxyHandler(Mock(), Mock())
         agent_config = {"is_azure_agent": True, "model": "gpt-4o"}
 
-        url = handler._build_azure_url("test-token", "agent-123", agent_config)
+        url = handler._build_azure_url("agent-123", agent_config)
 
-        assert "agent_id=agent-123" in url
+        assert "agent-id=agent-123" in url
         assert "test-resource" in url
         assert "test-project" in url
 
@@ -49,10 +49,10 @@ class TestVoiceProxyHandler:
         handler = VoiceProxyHandler(Mock(), Mock())
         agent_config = {"is_azure_agent": False, "model": "gpt-4"}
 
-        url = handler._build_azure_url("test-token", "local-agent-123", agent_config)
+        url = handler._build_azure_url("local-agent-123", agent_config)
 
         assert "model=gpt-4" in url
-        assert "agent_id=" not in url or "agent_id=&" in url
+        assert "agent-id=" not in url or "agent-id=&" in url
         assert "test-resource" in url
 
     @patch("websocket_handler.config")
@@ -66,9 +66,9 @@ class TestVoiceProxyHandler:
 
         handler = VoiceProxyHandler(Mock(), Mock())
 
-        url = handler._build_azure_url("test-token", None, None)
+        url = handler._build_azure_url(None, None)
 
-        assert "agent_id=static-agent-123" in url
+        assert "agent-id=static-agent-123" in url
         assert "test-resource" in url
 
     @patch("websocket_handler.config")

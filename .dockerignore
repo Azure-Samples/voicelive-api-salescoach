@@ -1,0 +1,96 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+LICENSE
+docs/assets/
+
+# CI/CD
+.github/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependencies (installed inside container)
+node_modules/
+.npm
+.yarn/
+
+# Build outputs (built inside container) 
+dist/
+build/
+frontend/static/
+backend/static/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output
+
+# Environment files (use docker-compose or --env-file)
+.env*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.mypy_cache/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache
+
+# Development containers
+.devcontainer/
+
+# Testing
+.pytest_cache/
+
+# Linting cache
+.eslintcache
+.stylelintcache
+
+# Docker files (don't include in build context)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+config/docker/
+backup_*/
