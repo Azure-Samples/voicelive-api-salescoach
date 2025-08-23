@@ -27,6 +27,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify Dockerfile exists
+        run: |
+          if [ ! -f "backend/Dockerfile" ]; then
+            echo "Dockerfile not found in backend directory"
+            exit 1
+          fi
+          echo "Backend Dockerfile found"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -56,6 +64,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./backend/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
