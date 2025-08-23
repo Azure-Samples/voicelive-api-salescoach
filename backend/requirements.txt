@@ -1,10 +1,9 @@
-flask==3.0.0
+flask==3.1.2
 flask-sock==0.7.0
-python-dotenv==1.0.0
+python-dotenv==1.1.0
 azure-identity>=1.15.0
-azure-cognitiveservices-speech==1.34.0
-openai>=1.99.9
-websockets==12.0
-pyyaml==6.0.1
-Wave==0.0.2
+azure-cognitiveservices-speech==1.45.0
+openai>=1.101.0
+websockets==15.0.1
+pyyaml==6.0.2
 azure-ai-projects>=1.0.0

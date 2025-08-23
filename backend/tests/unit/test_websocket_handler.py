@@ -12,12 +12,10 @@ class TestVoiceProxyHandler:
 
     def test_voice_proxy_handler_initialization(self):
         """Test handler initialization."""
-        token_manager = Mock()
         agent_manager = Mock()
 
-        handler = VoiceProxyHandler(token_manager, agent_manager)
+        handler = VoiceProxyHandler(agent_manager)
 
-        # token_manager is kept for compatibility but not stored as instance variable
         assert handler.agent_manager == agent_manager
 
     @patch("websocket_handler.config")
@@ -28,7 +26,7 @@ class TestVoiceProxyHandler:
             "azure_ai_project_name": "test-project",
         }.get(key, "default")
 
-        handler = VoiceProxyHandler(Mock(), Mock())
+        handler = VoiceProxyHandler(Mock())
         agent_config = {"is_azure_agent": True, "model": "gpt-4o"}
 
         url = handler._build_azure_url("agent-123", agent_config)
@@ -46,7 +44,7 @@ class TestVoiceProxyHandler:
             "model_deployment_name": "gpt-4o",
         }.get(key, "default")
 
-        handler = VoiceProxyHandler(Mock(), Mock())
+        handler = VoiceProxyHandler(Mock())
         agent_config = {"is_azure_agent": False, "model": "gpt-4"}
 
         url = handler._build_azure_url("local-agent-123", agent_config)
@@ -64,7 +62,7 @@ class TestVoiceProxyHandler:
             "agent_id": "static-agent-123",
         }.get(key, "default")
 
-        handler = VoiceProxyHandler(Mock(), Mock())
+        handler = VoiceProxyHandler(Mock())
 
         url = handler._build_azure_url(None, None)
 
@@ -79,7 +77,7 @@ class TestVoiceProxyHandler:
             "model_deployment_name": "gpt-4o"
         }.get(key, "default")
 
-        handler = VoiceProxyHandler(Mock(), Mock())
+        handler = VoiceProxyHandler(Mock())
 
         # Mock WebSocket
         mock_azure_ws = AsyncMock()
@@ -107,7 +105,7 @@ class TestVoiceProxyHandler:
     @pytest.mark.asyncio
     async def test_send_initial_config_without_agent(self):
         """Test sending initial configuration without agent config."""
-        handler = VoiceProxyHandler(Mock(), Mock())
+        handler = VoiceProxyHandler(Mock())
 
         # Mock WebSocket
         mock_azure_ws = AsyncMock()
@@ -127,7 +125,7 @@ class TestVoiceProxyHandler:
     @pytest.mark.asyncio
     async def test_send_message(self):
         """Test sending a message to WebSocket."""
-        handler = VoiceProxyHandler(Mock(), Mock())
+        handler = VoiceProxyHandler(Mock())
 
         # Mock WebSocket with executor
         mock_ws = Mock()

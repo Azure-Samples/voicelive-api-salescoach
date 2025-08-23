@@ -1,5 +1,13 @@
 import { Scenario, Assessment } from '../types'
 
+function extractUserText(conversationMessages: any[]): string {
+  return conversationMessages
+    .filter(msg => msg.role === 'user')
+    .map(msg => msg.content)
+    .join(' ')
+    .trim()
+}
+
 export const api = {
   async getConfig() {
     const res = await fetch('/api/config')
@@ -24,8 +32,11 @@ export const api = {
   async analyzeConversation(
     scenarioId: string,
     transcript: string,
-    audioData: any[]
+    audioData: any[],
+    conversationMessages: any[]
   ): Promise<Assessment> {
+    const referenceText = extractUserText(conversationMessages)
+
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -33,6 +44,7 @@ export const api = {
         scenario_id: scenarioId,
         transcript,
         audio_data: audioData,
+        reference_text: referenceText,
       }),
     })
     if (!res.ok) throw new Error('Analysis failed')

@@ -5,7 +5,6 @@ import base64
 import io
 import json
 import logging
-import os
 import wave
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -18,6 +17,38 @@ from config import config
 
 logger = logging.getLogger(__name__)
 
+# Constants
+EVALUATION_FILE_SUFFIX = "*evaluation.prompt.yml"
+EVALUATION_SUFFIX_REMOVAL = "-evaluation.prompt"
+SCENARIO_DATA_DIR = "data/scenarios"
+DOCKER_APP_PATH = "/app"
+
+# Scoring constants
+MAX_PROFESSIONAL_TONE_SCORE = 10
+MAX_ACTIVE_LISTENING_SCORE = 10
+MAX_ENGAGEMENT_QUALITY_SCORE = 10
+MAX_NEEDS_ASSESSMENT_SCORE = 25
+MAX_VALUE_PROPOSITION_SCORE = 25
+MAX_OBJECTION_HANDLING_SCORE = 20
+MAX_OVERALL_SCORE = 100
+MAX_TONE_STYLE_SCORE = 30
+MAX_CONTENT_SCORE = 70
+
+# Audio processing constants
+MIN_AUDIO_SIZE_BYTES = 48000
+AUDIO_SAMPLE_RATE = 24000
+AUDIO_CHANNELS = 1
+AUDIO_SAMPLE_WIDTH = 2
+AUDIO_BITS_PER_SAMPLE = 16
+
+# Model constants
+GPT_MODEL_NAME = "gpt-4o"
+SPEECH_LANGUAGE = "en-US"
+
+# Assessment constants
+MAX_STRENGTHS_COUNT = 3
+MAX_IMPROVEMENTS_COUNT = 3
+
 
 class ConversationAnalyzer:
     """Analyzes sales conversations using Azure OpenAI."""
@@ -29,18 +60,20 @@ class ConversationAnalyzer:
         Args:
             scenario_dir: Directory containing evaluation scenario files
         """
-        if scenario_dir is None:
-            docker_path = Path("/app/data/scenarios")
-            if docker_path.exists():
-                self.scenario_dir = docker_path
-            else:
-                self.scenario_dir = (
-                    Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
-                )
-        else:
-            self.scenario_dir = scenario_dir
+        self.scenario_dir = self._determine_scenario_directory(scenario_dir)
         self.evaluation_scenarios = self._load_evaluation_scenarios()
         self.openai_client = self._initialize_openai_client()
+
+    def _determine_scenario_directory(self, scenario_dir: Optional[Path]) -> Path:
+        """Determine the correct scenario directory path."""
+        if scenario_dir is not None:
+            return scenario_dir
+
+        docker_path = Path(DOCKER_APP_PATH) / SCENARIO_DATA_DIR
+        if docker_path.exists():
+            return docker_path
+
+        return Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
 
     def _load_evaluation_scenarios(self) -> Dict[str, Any]:
         """
@@ -55,11 +88,11 @@ class ConversationAnalyzer:
             logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
             return scenarios
 
-        for file in self.scenario_dir.glob("*evaluation.prompt.yml"):
+        for file in self.scenario_dir.glob(EVALUATION_FILE_SUFFIX):
             try:
                 with open(file) as f:
                     scenario = yaml.safe_load(f)
-                    scenario_id = file.stem.replace("-evaluation.prompt", "")
+                    scenario_id = file.stem.replace(EVALUATION_SUFFIX_REMOVAL, "")
                     scenarios[scenario_id] = scenario
                     logger.info(f"Loaded evaluation scenario: {scenario_id}")
             except Exception as e:
@@ -122,6 +155,36 @@ class ConversationAnalyzer:
 
         return await self._call_evaluation_model(evaluation_scenario, transcript)
 
+    def _build_evaluation_prompt(
+        self, scenario: Dict[str, Any], transcript: str
+    ) -> str:
+        """Build the evaluation prompt."""
+        base_prompt = scenario["messages"][0]["content"]
+        return f"""{base_prompt}
+
+        EVALUATION CRITERIA:
+
+        **SPEAKING TONE & STYLE ({MAX_TONE_STYLE_SCORE} points total):**
+        - professional_tone: 0-{MAX_PROFESSIONAL_TONE_SCORE} points for confident, consultative, appropriate business language
+        - active_listening: 0-{MAX_ACTIVE_LISTENING_SCORE} points for acknowledging concerns and asking clarifying questions
+        - engagement_quality: 0-{MAX_ENGAGEMENT_QUALITY_SCORE} points for encouraging dialogue and thoughtful responses
+
+        **CONVERSATION CONTENT QUALITY ({MAX_CONTENT_SCORE} points total):**
+        - needs_assessment: 0-{MAX_NEEDS_ASSESSMENT_SCORE} points for understanding customer challenges and goals
+        - value_proposition: 0-{MAX_VALUE_PROPOSITION_SCORE} points for clear benefits with data/examples/reasoning
+        - objection_handling: 0-{MAX_OBJECTION_HANDLING_SCORE} points for addressing concerns with constructive solutions
+
+        Calculate overall_score as the sum of all individual scores (max {MAX_OVERALL_SCORE}).
+
+        You are evaluating the conversation from perspective of the user (Starting the conversation)
+        DO NOT rate the conversation of the 'assistant'!
+
+        Provide maximum of {MAX_STRENGTHS_COUNT} strengths and {MAX_IMPROVEMENTS_COUNT} areas of improvement.
+
+        CONVERSATION TO EVALUATE:
+        {transcript}
+        """
+
     async def _call_evaluation_model(
         self, scenario: Dict[str, Any], transcript: str
     ) -> Optional[Dict[str, Any]]:
@@ -141,15 +204,8 @@ class ConversationAnalyzer:
             completion = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self.openai_client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are an expert sales conversation evaluator. "
-                            "Analyze the provided conversation and return a structured evaluation.",
-                        },
-                        {"role": "user", "content": evaluation_prompt},
-                    ],
+                    model=GPT_MODEL_NAME,
+                    messages=self._build_evaluation_messages(evaluation_prompt),
                     response_format=self._get_response_format(),
                 ),
             )
@@ -165,37 +221,16 @@ class ConversationAnalyzer:
             logger.error(f"Error in evaluation model: {e}")
             return None
 
-    def _build_evaluation_prompt(
-        self, scenario: Dict[str, Any], transcript: str
-    ) -> str:
-        """Build the evaluation prompt."""
-        base_prompt = scenario["messages"][0]["content"]
-        return f"""{base_prompt}
-
-        EVALUATION CRITERIA:
-
-        **SPEAKING TONE & STYLE (30 points total):**
-        - professional_tone: 0-10 points for confident, consultative, appropriate business language
-        - active_listening: 0-10 points for acknowledging concerns and asking clarifying questions
-        - engagement_quality: 0-10 points for encouraging dialogue and thoughtful responses
-
-        **CONVERSATION CONTENT QUALITY (70 points total):**
-        - needs_assessment: 0-25 points for understanding customer challenges and goals
-        - value_proposition: 0-25 points for clear benefits with data/examples/reasoning
-        - objection_handling: 0-20 points for addressing concerns with constructive solutions
-
-        Calculate overall_score as the sum of all individual scores (max 100).
-
-        You are evaluating the conversation from perspective of the user (Starting the conversation)
-        DO NOT rate the conversation of the 'assistant'!
-
-
-        Provide maximum of 3 strengths and 3 areas of improvement.
-
-
-        CONVERSATION TO EVALUATE:
-        {transcript}
-        """
+    def _build_evaluation_messages(self, evaluation_prompt: str) -> List[Dict[str, str]]:
+        """Build the messages for the evaluation API call."""
+        return [
+            {
+                "role": "system",
+                "content": "You are an expert sales conversation evaluator. "
+                "Analyze the provided conversation and return a structured evaluation.",
+            },
+            {"role": "user", "content": evaluation_prompt},
+        ]
 
     def _get_response_format(self) -> Dict[str, Any]:
         """Get the structured response format for OpenAI."""
@@ -267,7 +302,6 @@ class ConversationAnalyzer:
         self, evaluation_json: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process and validate evaluation results."""
-        # Recalculate totals to ensure accuracy
         evaluation_json["speaking_tone_style"]["total"] = sum(
             [
                 evaluation_json["speaking_tone_style"]["professional_tone"],
@@ -297,33 +331,72 @@ class PronunciationAssessor:
         """Initialize the pronunciation assessor."""
         self.speech_key = config["azure_speech_key"]
         self.speech_region = config["azure_speech_region"]
-        self._is_docker = self._detect_docker_environment()
-        self._platform_available = None  # Will be set on first use
-        
-    def _detect_docker_environment(self) -> bool:
-        """Detect if running in a Docker container."""
-        try:
-            # Check for Docker-specific indicators
-            with open('/proc/1/cgroup', 'r') as f:
-                return 'docker' in f.read() or 'containerd' in f.read()
-        except (FileNotFoundError, PermissionError):
-            # Fallback: check for other Docker indicators
-            return (
-                os.path.exists('/.dockerenv') or 
-                os.environ.get('DOCKER_CONTAINER') == 'true'
-            )
-    
-    def _create_mock_assessment(self) -> Dict[str, Any]:
-        """Create a mock pronunciation assessment when Speech SDK is unavailable."""
+
+    def _create_wav_audio(self, audio_bytes: bytearray) -> bytes:
+        """Create WAV format audio from raw PCM bytes."""
+        wav_buffer = io.BytesIO()
+
+        with wave.open(wav_buffer, "wb") as wav_file:
+            wav_file.setnchannels(AUDIO_CHANNELS)
+            wav_file.setsampwidth(AUDIO_SAMPLE_WIDTH)
+            wav_file.setframerate(AUDIO_SAMPLE_RATE)
+            wav_file.writeframes(audio_bytes)
+
+        wav_buffer.seek(0)
+        return wav_buffer.read()
+
+    def _log_assessment_info(self, wav_audio: bytes, reference_text: Optional[str]) -> None:
+        """Log information about the assessment being performed."""
+        logger.info(f"Starting pronunciation assessment with audio size: {len(wav_audio)} bytes")
+        logger.info(f"Reference text: {reference_text or 'None'}")
+        logger.info(f"Speech key configured: {'Yes' if self.speech_key else 'No'}")
+        logger.info(f"Speech region: {self.speech_region}")
+
+    def _create_speech_config(self) -> speechsdk.SpeechConfig:
+        """Create speech configuration."""
+        speech_config = speechsdk.SpeechConfig(
+            subscription=self.speech_key, region=self.speech_region
+        )
+        speech_config.speech_recognition_language = SPEECH_LANGUAGE
+        return speech_config
+
+    def _create_pronunciation_config(self, reference_text: Optional[str]) -> speechsdk.PronunciationAssessmentConfig:
+        """Create pronunciation assessment configuration."""
+        pronunciation_config = speechsdk.PronunciationAssessmentConfig(
+            reference_text=reference_text or "",
+            grading_system=speechsdk.PronunciationAssessmentGradingSystem.HundredMark,
+            granularity=speechsdk.PronunciationAssessmentGranularity.Phoneme,
+            enable_miscue=True,
+        )
+        pronunciation_config.enable_prosody_assessment()
+        return pronunciation_config
+
+    def _create_audio_config(self, wav_audio: bytes) -> speechsdk.audio.AudioConfig:
+        """Create audio configuration from WAV data."""
+        audio_format = speechsdk.audio.AudioStreamFormat(
+            samples_per_second=AUDIO_SAMPLE_RATE,
+            bits_per_sample=AUDIO_BITS_PER_SAMPLE,
+            channels=AUDIO_CHANNELS,
+            wave_stream_format=speechsdk.audio.AudioStreamWaveFormat.PCM,
+        )
+
+        push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audio_format)
+        push_stream.write(wav_audio)
+        push_stream.close()
+
+        return speechsdk.audio.AudioConfig(stream=push_stream)
+
+    def _build_assessment_result(
+        self, pronunciation_result: speechsdk.PronunciationAssessmentResult, result
+    ) -> Dict[str, Any]:
+        """Build the final assessment result."""
         return {
-            "accuracy_score": 85.0,
-            "fluency_score": 80.0, 
-            "completeness_score": 90.0,
-            "prosody_score": 75.0,
-            "pronunciation_score": 82.5,
-            "words": [],
-            "mock_data": True,
-            "reason": "Speech SDK unavailable in Docker environment"
+            "accuracy_score": pronunciation_result.accuracy_score,
+            "fluency_score": pronunciation_result.fluency_score,
+            "completeness_score": pronunciation_result.completeness_score,
+            "prosody_score": getattr(pronunciation_result, "prosody_score", None),
+            "pronunciation_score": pronunciation_result.pronunciation_score,
+            "words": self._extract_word_details(result),
         }
 
     async def assess_pronunciation(
@@ -344,7 +417,6 @@ class PronunciationAssessor:
             return None
 
         try:
-            # Prepare audio data
             combined_audio = await self._prepare_audio_data(audio_data)
             if not combined_audio:
                 logger.error("No audio data to assess")
@@ -352,14 +424,10 @@ class PronunciationAssessor:
 
             logger.info(f"Combined audio size: {len(combined_audio)} bytes")
 
-            # Check minimum audio length (at least 1 second of 24kHz 16-bit mono audio = 48000 bytes)
-            if len(combined_audio) < 48000:
+            if len(combined_audio) < MIN_AUDIO_SIZE_BYTES:
                 logger.warning(f"Audio might be too short: {len(combined_audio)} bytes")
 
-            # Create WAV format audio
             wav_audio = self._create_wav_audio(combined_audio)
-
-            # Perform assessment
             return await self._perform_assessment(wav_audio, reference_text)
 
         except Exception as e:
@@ -380,96 +448,27 @@ class PronunciationAssessor:
 
         return combined_audio
 
-    def _create_wav_audio(self, audio_bytes: bytearray) -> bytes:
-        """Create WAV format audio from raw PCM bytes."""
-        wav_buffer = io.BytesIO()
-
-        with wave.open(wav_buffer, "wb") as wav_file:
-            wav_file.setnchannels(1)  # Mono
-            wav_file.setsampwidth(2)  # 16-bit
-            wav_file.setframerate(24000)  # 24kHz
-            wav_file.writeframes(audio_bytes)
-
-        wav_buffer.seek(0)
-        return wav_buffer.read()
-
     async def _perform_assessment(
         self, wav_audio: bytes, reference_text: Optional[str]
     ) -> Optional[Dict[str, Any]]:
         """Perform the actual pronunciation assessment."""
-        logger.info(
-            f"Starting pronunciation assessment with audio size: {len(wav_audio)} bytes"
-        )
-        logger.info(f"Reference text: {reference_text or 'None'}")
-        logger.info(f"Speech key configured: {'Yes' if self.speech_key else 'No'}")
-        logger.info(f"Speech region: {self.speech_region}")
+        self._log_assessment_info(wav_audio, reference_text)
 
-        # Create speech configuration
-        speech_config = speechsdk.SpeechConfig(
-            subscription=self.speech_key, region=self.speech_region
-        )
-        speech_config.speech_recognition_language = "en-US"
+        speech_config = self._create_speech_config()
+        pronunciation_config = self._create_pronunciation_config(reference_text)
+        audio_config = self._create_audio_config(wav_audio)
 
-        # Configure pronunciation assessment
-        pronunciation_config = speechsdk.PronunciationAssessmentConfig(
-            reference_text=reference_text or "",
-            grading_system=speechsdk.PronunciationAssessmentGradingSystem.HundredMark,
-            granularity=speechsdk.PronunciationAssessmentGranularity.Phoneme,
-            enable_miscue=True,
-        )
-        pronunciation_config.enable_prosody_assessment()
-
-        # Create audio stream
-        audio_format = speechsdk.audio.AudioStreamFormat(
-            samples_per_second=24000,
-            bits_per_sample=16,
-            channels=1,
-            wave_stream_format=speechsdk.audio.AudioStreamWaveFormat.PCM,
-        )
-
-        push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audio_format)
-        push_stream.write(wav_audio)
-        push_stream.close()
-
-        audio_config = speechsdk.audio.AudioConfig(stream=push_stream)
-
-        # Create recognizer and apply configuration
         speech_recognizer = speechsdk.SpeechRecognizer(
-            speech_config=speech_config, audio_config=audio_config, language="en-US"
+            speech_config=speech_config, audio_config=audio_config, language=SPEECH_LANGUAGE
         )
         pronunciation_config.apply_to(speech_recognizer)
 
-        # Perform recognition
         result = await asyncio.get_event_loop().run_in_executor(
             None, speech_recognizer.recognize_once
         )
 
-        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
-            return {
-                "accuracy_score": pronunciation_result.accuracy_score,
-                "fluency_score": pronunciation_result.fluency_score,
-                "completeness_score": pronunciation_result.completeness_score,
-                "prosody_score": getattr(pronunciation_result, "prosody_score", None),
-                "pronunciation_score": pronunciation_result.pronunciation_score,
-                "words": self._extract_word_details(result),
-            }
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = speechsdk.CancellationDetails(result)
-            logger.error(f"Speech recognition canceled: {cancellation_details.reason}")
-            
-            if hasattr(cancellation_details, 'error_code'):
-                logger.error(f"Error code: {cancellation_details.error_code}")
-            
-            if hasattr(cancellation_details, 'error_details'):
-                logger.error(f"Error details: {cancellation_details.error_details}")
-            
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                logger.error("Authentication or configuration error likely")
-            return None
-        else:
-            logger.error(f"Speech recognition failed: {result.reason}")
-            return None
+        pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
+        return self._build_assessment_result(pronunciation_result, result)
 
     def _extract_word_details(self, result) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""

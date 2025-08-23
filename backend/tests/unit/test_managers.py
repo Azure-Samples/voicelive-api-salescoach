@@ -2,55 +2,11 @@
 
 import tempfile
 from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import yaml
 
-from managers import TokenManager, ScenarioManager, AgentManager
-
-
-class TestTokenManager:
-    """Test token manager functionality."""
-
-    def test_token_manager_initialization(self):
-        """Test that token manager initializes correctly."""
-        manager = TokenManager()
-        assert manager.credential is None
-        assert manager.token is None
-        assert manager.expires_at is None
-
-    @patch("managers.DefaultAzureCredential")
-    def test_get_token_first_time(self, mock_credential_class):
-        """Test getting token for the first time."""
-        # Mock the credential and token response
-        mock_credential = Mock()
-        mock_credential_class.return_value = mock_credential
-
-        mock_token_response = Mock()
-        mock_token_response.token = "test-token"
-        mock_token_response.expires_on = (
-            datetime.now() + timedelta(hours=1)
-        ).timestamp()
-        mock_credential.get_token.return_value = mock_token_response
-
-        manager = TokenManager()
-        token = manager.get_token()
-
-        assert token == "test-token"
-        assert manager.token == "test-token"
-        assert manager.credential is not None
-
-    @patch("managers.DefaultAzureCredential")
-    def test_get_token_with_valid_existing_token(self, mock_credential_class):
-        """Test getting token when valid token exists."""
-        manager = TokenManager()
-        manager.token = "existing-token"
-        manager.expires_at = datetime.now() + timedelta(hours=1)
-
-        token = manager.get_token()
-        assert token == "existing-token"
-        # Should not call credential methods
-        mock_credential_class.assert_not_called()
+from managers import ScenarioManager, AgentManager
 
 
 class TestScenarioManager:
@@ -117,6 +73,22 @@ class TestScenarioManager:
 class TestAgentManager:
     """Test cases for AgentManager."""
 
+    def setup_method(self):
+        """Set up test fixtures."""
+        with patch('managers.config') as mock_config:
+            mock_config.__getitem__.side_effect = lambda key: {
+                'use_azure_ai_agents': False,
+                'project_endpoint': '',
+                'model_deployment_name': 'gpt-4o'
+            }.get(key, '')
+            mock_config.get.side_effect = lambda key, default=None: {
+                'use_azure_ai_agents': False,
+                'project_endpoint': '',
+                'model_deployment_name': 'gpt-4o'
+            }.get(key, default)
+            with patch('managers.DefaultAzureCredential'):
+                self.agent_manager = AgentManager()
+
     @patch("managers.config")
     def test_create_agent_success_local(self, mock_config):
         """Test successful local agent creation."""
@@ -142,41 +114,53 @@ class TestAgentManager:
         assert "Test instructions" in manager.agents[agent_id]["instructions"]
         assert manager.BASE_INSTRUCTIONS in manager.agents[agent_id]["instructions"]
 
-    @patch("managers.AIProjectClient", create=True)
-    @patch("managers.AZURE_AI_AGENTS_AVAILABLE", True)
-    @patch("managers.config")
-    def test_create_agent_success_azure(self, mock_config, mock_ai_client_class):
+    @patch('managers.config')
+    @patch('managers.DefaultAzureCredential')
+    @patch('managers.AIProjectClient')
+    def test_create_agent_success_azure(self, mock_ai_client, mock_credential, mock_config):
         """Test successful Azure agent creation."""
-        # Configure for Azure agent creation
+        # Mock configuration
         mock_config.__getitem__.side_effect = lambda key: {
-            "use_azure_ai_agents": True,
-            "project_endpoint": "https://test.azure.com",
-            "model_deployment_name": "gpt-4o",
-        }.get(key, "default")
+            'use_azure_ai_agents': True,
+            'project_endpoint': 'https://test.endpoint',
+            'model_deployment_name': 'gpt-4o'
+        }.get(key, '')
+        mock_config.get.side_effect = lambda key, default=None: {
+            'use_azure_ai_agents': True,
+            'project_endpoint': 'https://test.endpoint',
+            'model_deployment_name': 'gpt-4o'
+        }.get(key, default)
 
-        # Mock the AI client
-        mock_ai_client = MagicMock()
-        mock_ai_client_class.return_value = mock_ai_client
+        # Mock AI Project Client with context manager support
+        mock_client_instance = MagicMock()
+        mock_client_instance.__enter__ = Mock(return_value=mock_client_instance)
+        mock_client_instance.__exit__ = Mock(return_value=None)
 
-        # Mock the agent creation
-        mock_agent = MagicMock()
-        mock_agent.id = "asst_test123"
-        mock_ai_client.__enter__.return_value = mock_ai_client
-        mock_ai_client.agents.create_agent.return_value = mock_agent
+        mock_agent = Mock()
+        mock_agent.id = "test-azure-agent-id"
+        mock_client_instance.agents.create_agent.return_value = mock_agent
+        mock_ai_client.return_value = mock_client_instance
 
-        manager = AgentManager()
+        # Create agent manager with Azure AI enabled
+        agent_manager = AgentManager()
+        agent_manager.project_client = mock_client_instance
+
         scenario_data = {
             "messages": [{"content": "Test instructions"}],
-            "model": "gpt-4",
-            "modelParameters": {"temperature": 0.8, "max_tokens": 1500},
+            "model": "gpt-4o",
+            "modelParameters": {"temperature": 0.8, "max_tokens": 1500}
         }
 
-        agent_id = manager.create_agent("test-scenario", scenario_data)
+        agent_id = agent_manager.create_agent("test-scenario", scenario_data)
 
-        assert agent_id == "asst_test123"
-        assert agent_id in manager.agents
-        assert manager.agents[agent_id]["scenario_id"] == "test-scenario"
-        assert manager.agents[agent_id]["is_azure_agent"] is True
+        assert agent_id == "test-azure-agent-id"
+        assert agent_id in agent_manager.agents
+        agent_config = agent_manager.agents[agent_id]
+        assert agent_config["scenario_id"] == "test-scenario"
+        assert agent_config["is_azure_agent"] is True
+        assert agent_config["model"] == "gpt-4o"
+        assert agent_config["temperature"] == 0.8
+        assert agent_config["max_tokens"] == 1500
 
     def test_get_agent_existing(self):
         """Test getting an existing agent."""
@@ -224,26 +208,49 @@ class TestAgentManager:
         manager.delete_agent("test-agent")
         assert "test-agent" not in manager.agents
 
-    @patch("managers.AIProjectClient", create=True)
-    @patch("managers.AZURE_AI_AGENTS_AVAILABLE", True)
-    @patch("managers.config")
-    def test_delete_agent_azure(self, mock_config, mock_ai_client_class):
-        """Test deleting an Azure agent."""
+    @patch('managers.config')
+    @patch('managers.DefaultAzureCredential')
+    @patch('managers.AIProjectClient')
+    def test_delete_agent_azure(self, mock_ai_client, mock_credential, mock_config):
+        """Test Azure agent deletion."""
+        # Mock configuration
         mock_config.__getitem__.side_effect = lambda key: {
-            "use_azure_ai_agents": True,
-            "project_endpoint": "https://test.azure.com",
-            "model_deployment_name": "gpt-4o",
-        }.get(key, "default")
+            'use_azure_ai_agents': True,
+            'project_endpoint': 'https://test.endpoint',
+            'model_deployment_name': 'gpt-4o'
+        }.get(key, '')
+        mock_config.get.side_effect = lambda key, default=None: {
+            'use_azure_ai_agents': True,
+            'project_endpoint': 'https://test.endpoint',
+            'model_deployment_name': 'gpt-4o'
+        }.get(key, default)
 
-        # Mock the AI client
-        mock_ai_client = MagicMock()
-        mock_ai_client_class.return_value = mock_ai_client
-        mock_ai_client.__enter__.return_value = mock_ai_client
+        # Mock AI Project Client with context manager support
+        mock_client_instance = MagicMock()
+        mock_client_instance.__enter__ = Mock(return_value=mock_client_instance)
+        mock_client_instance.__exit__ = Mock(return_value=None)
+        mock_ai_client.return_value = mock_client_instance
 
-        manager = AgentManager()
-        manager.agents["test-agent"] = {"scenario_id": "test", "is_azure_agent": True}
+        # Create agent manager
+        agent_manager = AgentManager()
+        agent_manager.project_client = mock_client_instance
 
-        manager.delete_agent("test-agent")
+        # Add a test Azure agent
+        agent_id = "test-azure-agent"
+        agent_manager.agents[agent_id] = {
+            "scenario_id": "test-scenario",
+            "is_azure_agent": True,
+            "instructions": "Test instructions",
+            "created_at": datetime.now(),
+            "model": "gpt-4o",
+            "temperature": 0.7,
+            "max_tokens": 2000,
+            "azure_agent_id": agent_id
+        }
 
-        assert "test-agent" not in manager.agents
-        mock_ai_client.agents.delete_agent.assert_called_once_with("test-agent")
+        # Delete the agent
+        agent_manager.delete_agent(agent_id)
+
+        # Verify deletion
+        assert agent_id not in agent_manager.agents
+        mock_client_instance.agents.delete_agent.assert_called_once_with(agent_id)

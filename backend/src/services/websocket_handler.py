@@ -13,19 +13,38 @@ from services.managers import AgentManager
 
 logger = logging.getLogger(__name__)
 
+# WebSocket constants
+AZURE_VOICE_API_VERSION = "2025-05-01-preview"
+AZURE_COGNITIVE_SERVICES_DOMAIN = "cognitiveservices.azure.com"
+VOICE_AGENT_ENDPOINT = "voice-agent/realtime"
+
+# Session configuration constants
+DEFAULT_MODALITIES = ["text", "audio"]
+DEFAULT_TURN_DETECTION_TYPE = "azure_semantic_vad"
+DEFAULT_NOISE_REDUCTION_TYPE = "azure_deep_noise_suppression"
+DEFAULT_ECHO_CANCELLATION_TYPE = "server_echo_cancellation"
+DEFAULT_AVATAR_CHARACTER = "lisa"
+DEFAULT_AVATAR_STYLE = "casual-sitting"
+
+# Message types
+SESSION_UPDATE_TYPE = "session.update"
+PROXY_CONNECTED_TYPE = "proxy.connected"
+ERROR_TYPE = "error"
+
+# Log message truncation length
+LOG_MESSAGE_MAX_LENGTH = 100
+
 
 class VoiceProxyHandler:
     """Handles WebSocket proxy connections between client and Azure Voice API."""
 
-    def __init__(self, token_manager, agent_manager: AgentManager):
+    def __init__(self, agent_manager: AgentManager):
         """
         Initialize the voice proxy handler.
 
         Args:
-            token_manager: Token manager instance (kept for compatibility but not used)
             agent_manager: Agent manager instance
         """
-        # Keep token_manager parameter for compatibility but don't use it
         self.agent_manager = agent_manager
 
     async def handle_connection(self, client_ws) -> None:
@@ -94,7 +113,7 @@ class VoiceProxyHandler:
 
             headers = {"api-key": api_key}
 
-            azure_ws = await websockets.connect(azure_url, extra_headers=headers)
+            azure_ws = await websockets.connect(azure_url, additional_headers=headers)
             logger.info(
                 f"Connected to Azure Voice API with agent: {agent_id or 'default'}"
             )
@@ -111,51 +130,73 @@ class VoiceProxyHandler:
         self, agent_id: Optional[str], agent_config: Optional[dict]
     ) -> str:
         """Build the Azure WebSocket URL."""
-        base_url = (
-            f"wss://{config['azure_ai_resource_name']}.cognitiveservices.azure.com/"
-            f"voice-agent/realtime?api-version=2025-05-01-preview"
-            f"&x-ms-client-request-id={uuid.uuid4()}"
-            f"&agent-project-name={config['azure_ai_project_name']}"
-        )
+        base_url = self._build_base_azure_url()
 
         if agent_config:
-            if agent_config.get("is_azure_agent"):
-                return f"{base_url}&agent-id={agent_id}"
-            else:
-                model_name = agent_config.get("model", config["model_deployment_name"])
-                return f"{base_url}&model={model_name}"
+            return self._build_agent_specific_url(base_url, agent_id, agent_config)
         elif config["agent_id"]:
             return f"{base_url}&agent-id={config['agent_id']}"
         else:
             model_name = config["model_deployment_name"]
             return f"{base_url}&model={model_name}"
 
+    def _build_base_azure_url(self) -> str:
+        """Build the base Azure WebSocket URL."""
+        resource_name = config['azure_ai_resource_name']
+        project_name = config['azure_ai_project_name']
+        client_request_id = uuid.uuid4()
+
+        return (
+            f"wss://{resource_name}.{AZURE_COGNITIVE_SERVICES_DOMAIN}/"
+            f"{VOICE_AGENT_ENDPOINT}?api-version={AZURE_VOICE_API_VERSION}"
+            f"&x-ms-client-request-id={client_request_id}"
+            f"&agent-project-name={project_name}"
+        )
+
+    def _build_agent_specific_url(
+        self, base_url: str, agent_id: Optional[str], agent_config: dict
+    ) -> str:
+        """Build URL for specific agent configuration."""
+        if agent_config.get("is_azure_agent"):
+            return f"{base_url}&agent-id={agent_id}"
+        else:
+            model_name = agent_config.get("model", config["model_deployment_name"])
+            return f"{base_url}&model={model_name}"
+
     async def _send_initial_config(
         self, azure_ws, agent_config: Optional[dict]
     ) -> None:
         """Send initial configuration to Azure."""
-        config_message = {
-            "type": "session.update",
+        config_message = self._build_session_config()
+
+        if agent_config and not agent_config.get("is_azure_agent"):
+            self._add_local_agent_config(config_message, agent_config)
+
+        await azure_ws.send(json.dumps(config_message))
+
+    def _build_session_config(self) -> dict:
+        """Build the base session configuration."""
+        return {
+            "type": SESSION_UPDATE_TYPE,
             "session": {
-                "modalities": ["text", "audio"],
-                "turn_detection": {"type": "azure_semantic_vad"},
-                "input_audio_noise_reduction": {"type": "azure_deep_noise_suppression"},
-                "input_audio_echo_cancellation": {"type": "server_echo_cancellation"},
-                "avatar": {"character": "lisa", "style": "casual-sitting"},
+                "modalities": DEFAULT_MODALITIES,
+                "turn_detection": {"type": DEFAULT_TURN_DETECTION_TYPE},
+                "input_audio_noise_reduction": {"type": DEFAULT_NOISE_REDUCTION_TYPE},
+                "input_audio_echo_cancellation": {"type": DEFAULT_ECHO_CANCELLATION_TYPE},
+                "avatar": {
+                    "character": DEFAULT_AVATAR_CHARACTER,
+                    "style": DEFAULT_AVATAR_STYLE
+                },
             },
         }
 
-        if agent_config and not agent_config.get("is_azure_agent"):
-            config_message["session"]["model"] = agent_config.get(
-                "model", config["model_deployment_name"]
-            )
-            config_message["session"]["instructions"] = agent_config["instructions"]
-            config_message["session"]["temperature"] = agent_config["temperature"]
-            config_message["session"]["max_response_output_tokens"] = agent_config[
-                "max_tokens"
-            ]
-
-        await azure_ws.send(json.dumps(config_message))
+    def _add_local_agent_config(self, config_message: dict, agent_config: dict) -> None:
+        """Add local agent configuration to session config."""
+        session = config_message["session"]
+        session["model"] = agent_config.get("model", config["model_deployment_name"])
+        session["instructions"] = agent_config["instructions"]
+        session["temperature"] = agent_config["temperature"]
+        session["max_response_output_tokens"] = agent_config["max_tokens"]
 
     async def _handle_message_forwarding(self, client_ws, azure_ws) -> None:
         """Handle bidirectional message forwarding."""
@@ -178,7 +219,7 @@ class VoiceProxyHandler:
                 )
                 if message is None:
                     break
-                logger.debug(f"Client->Azure: {message[:100]}")
+                logger.debug(f"Client->Azure: {message[:LOG_MESSAGE_MAX_LENGTH]}")
                 await azure_ws.send(message)
         except Exception:
             logger.debug("Client connection closed during forwarding")
@@ -187,7 +228,7 @@ class VoiceProxyHandler:
         """Forward messages from Azure to client."""
         try:
             async for message in azure_ws:
-                logger.debug(f"Azure->Client: {message[:100]}")
+                logger.debug(f"Azure->Client: {message[:LOG_MESSAGE_MAX_LENGTH]}")
                 await asyncio.get_event_loop().run_in_executor(
                     None, client_ws.send, message
                 )

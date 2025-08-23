@@ -150,7 +150,8 @@ export default function App() {
       const result = await api.analyzeConversation(
         selectedScenario,
         transcript,
-        [...audioData, ...recordings.audio]
+        [...audioData, ...recordings.audio],
+        recordings.conversation
       )
 
       setAssessment(result)

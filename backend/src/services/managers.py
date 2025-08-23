@@ -3,52 +3,26 @@
 import logging
 import uuid
 import yaml
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
 
 from config import config
 
-# Conditionally import Azure AI Projects SDK
-try:
-    from azure.ai.projects import AIProjectClient
-
-    AZURE_AI_AGENTS_AVAILABLE = True
-except ImportError:
-    AZURE_AI_AGENTS_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning(
-        "Azure AI Projects SDK not available - using instruction-based approach only"
-    )
+# Constants
+ROLE_PLAY_FILE_SUFFIX = "-role-play.prompt.yml"
+ROLE_PLAY_SUFFIX_REMOVAL = "-role-play.prompt"
+AGENT_ID_PREFIX = "local-agent"
+AZURE_AGENT_NAME_PREFIX = "agent"
+UUID_SHORT_LENGTH = 8
+MAX_RESPONSE_LENGTH_SENTENCES = 3
+SCENARIO_DATA_DIR = "data/scenarios"
+DOCKER_APP_PATH = "/app"
 
 logger = logging.getLogger(__name__)
-
-
-class TokenManager:
-    """Manages Azure authentication tokens with automatic refresh."""
-
-    def __init__(self):
-        """Initialize the token manager."""
-        self.credential = None
-        self.token = None
-        self.expires_at = None
-
-    def get_token(self) -> str:
-        """
-        Get a valid authentication token, refreshing if necessary.
-
-        Returns:
-            str: Valid authentication token
-        """
-        if not self.token or datetime.now() >= (self.expires_at - timedelta(minutes=5)):
-            self.credential = self.credential or DefaultAzureCredential()
-            token_response = self.credential.get_token("https://ai.azure.com/.default")
-            self.token = token_response.token
-            self.expires_at = datetime.fromtimestamp(token_response.expires_on)
-            logger.info(f"Token refreshed, expires at {self.expires_at}")
-        return self.token
 
 
 class ScenarioManager:
@@ -61,18 +35,19 @@ class ScenarioManager:
         Args:
             scenario_dir: Directory containing scenario YAML files
         """
-        if scenario_dir is None:
-            docker_path = Path("/app/data/scenarios")
-            if docker_path.exists():
-                self.scenario_dir = docker_path
-            else:
-                self.scenario_dir = (
-                    Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
-                )
-        else:
-            self.scenario_dir = scenario_dir
-
+        self.scenario_dir = self._determine_scenario_directory(scenario_dir)
         self.scenarios = self._load_scenarios()
+
+    def _determine_scenario_directory(self, scenario_dir: Optional[Path]) -> Path:
+        """Determine the correct scenario directory path."""
+        if scenario_dir is not None:
+            return scenario_dir
+
+        docker_path = Path(DOCKER_APP_PATH) / SCENARIO_DATA_DIR
+        if docker_path.exists():
+            return docker_path
+
+        return Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
 
     def _load_scenarios(self) -> Dict[str, Any]:
         """
@@ -87,18 +62,28 @@ class ScenarioManager:
             logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
             return scenarios
 
-        for file in self.scenario_dir.glob("*role-play.prompt.yml"):
-            try:
-                with open(file) as f:
-                    scenario = yaml.safe_load(f)
-                    scenario_id = file.stem.replace("-role-play.prompt", "")
-                    scenarios[scenario_id] = scenario
-                    logger.info(f"Loaded scenario: {scenario_id}")
-            except Exception as e:
-                logger.error(f"Error loading scenario {file}: {e}")
+        for file in self.scenario_dir.glob(f"*{ROLE_PLAY_FILE_SUFFIX}"):
+            scenario_id = self._extract_scenario_id(file)
+            scenario = self._load_scenario_file(file)
+            if scenario:
+                scenarios[scenario_id] = scenario
+                logger.info(f"Loaded scenario: {scenario_id}")
 
         logger.info(f"Total scenarios loaded: {len(scenarios)}")
         return scenarios
+
+    def _extract_scenario_id(self, file: Path) -> str:
+        """Extract scenario ID from filename."""
+        return file.stem.replace(ROLE_PLAY_SUFFIX_REMOVAL, "")
+
+    def _load_scenario_file(self, file: Path) -> Optional[Dict[str, Any]]:
+        """Load a single scenario file."""
+        try:
+            with open(file) as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            logger.error(f"Error loading scenario {file}: {e}")
+            return None
 
     def get_scenario(self, scenario_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -133,10 +118,10 @@ class AgentManager:
     """Manages virtual training agents."""
 
     # Base instructions for human-like interactions
-    BASE_INSTRUCTIONS = """
+    BASE_INSTRUCTIONS = f"""
 
 CRITICAL INTERACTION GUIDELINES:
-- Keep responses SHORT and conversational (2-3 sentences max, as if speaking on phone)
+- Keep responses SHORT and conversational ({MAX_RESPONSE_LENGTH_SENTENCES} sentences max, as if speaking on phone)
 - ALWAYS stay in character - never break role or acknowledge you're an AI
 - Simulate natural human speech patterns with pauses, "um", "well", occasional hesitation
 - Respond as a real person would in this business context
@@ -150,22 +135,19 @@ CRITICAL INTERACTION GUIDELINES:
         """Initialize the agent manager."""
         self.agents = {}
         self.credential = DefaultAzureCredential()
-        self.use_azure_ai_agents = (
-            config["use_azure_ai_agents"] and AZURE_AI_AGENTS_AVAILABLE
-        )
-        self.project_client = None
+        self.use_azure_ai_agents = config["use_azure_ai_agents"]
+        self.project_client = self._initialize_project_client()
+        self._log_initialization_status()
 
+    def _log_initialization_status(self) -> None:
+        """Log the initialization status of the agent manager."""
         if self.use_azure_ai_agents:
-            self.project_client = self._initialize_project_client()
             logger.info("AgentManager initialized with Azure AI Agent Service support")
         else:
             logger.info("AgentManager initialized with instruction-based approach only")
 
-    def _initialize_project_client(self) -> Optional["AIProjectClient"]:
+    def _initialize_project_client(self) -> Optional[AIProjectClient]:
         """Initialize the Azure AI Project client."""
-        if not AZURE_AI_AGENTS_AVAILABLE:
-            return None
-
         try:
             project_endpoint = config["project_endpoint"]
             if not project_endpoint:
@@ -200,24 +182,20 @@ CRITICAL INTERACTION GUIDELINES:
         Raises:
             Exception: If agent creation fails
         """
-        # Combine base instructions with scenario-specific instructions
         scenario_instructions = scenario_data.get("messages", [{}])[0].get(
             "content", ""
         )
         combined_instructions = scenario_instructions + self.BASE_INSTRUCTIONS
 
-        # Get model configuration
         model_name = scenario_data.get("model", config["model_deployment_name"])
         temperature = scenario_data.get("modelParameters", {}).get("temperature", 0.7)
         max_tokens = scenario_data.get("modelParameters", {}).get("max_tokens", 2000)
 
         if self.use_azure_ai_agents and self.project_client:
-            # New approach: Create agent in Azure AI Foundry
             return self._create_azure_agent(
                 scenario_id, combined_instructions, model_name, temperature, max_tokens
             )
         else:
-            # Old approach: Create local agent configuration only
             return self._create_local_agent(
                 scenario_id, combined_instructions, model_name, temperature, max_tokens
             )
@@ -233,28 +211,27 @@ CRITICAL INTERACTION GUIDELINES:
         """Create an agent using Azure AI Agent Service."""
         try:
             with self.project_client:
+                agent_name = self._generate_agent_name(scenario_id)
                 agent = self.project_client.agents.create_agent(
                     model=model,
-                    name=f"agent-{scenario_id}-{uuid.uuid4().hex[:8]}",
+                    name=agent_name,
                     instructions=instructions,
-                    tools=[],  # Add tools if needed
+                    tools=[],
                     temperature=temperature,
                 )
 
                 agent_id = agent.id
                 logger.info(f"Created Azure AI agent: {agent_id}")
 
-                # Store agent configuration locally for reference
-                self.agents[agent_id] = {
-                    "scenario_id": scenario_id,
-                    "azure_agent_id": agent_id,
-                    "is_azure_agent": True,  # Mark as Azure-created agent
-                    "instructions": instructions,
-                    "created_at": datetime.now(),
-                    "model": model,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                }
+                self.agents[agent_id] = self._create_agent_config(
+                    scenario_id=scenario_id,
+                    agent_id=agent_id,
+                    is_azure_agent=True,
+                    instructions=instructions,
+                    model=model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
 
                 return agent_id
 
@@ -272,19 +249,17 @@ CRITICAL INTERACTION GUIDELINES:
     ) -> str:
         """Create a local agent configuration without Azure AI Agent Service."""
         try:
-            # Generate a unique agent ID
-            agent_id = f"local-agent-{scenario_id}-{uuid.uuid4().hex[:8]}"
+            agent_id = self._generate_local_agent_id(scenario_id)
 
-            # Store agent configuration locally
-            self.agents[agent_id] = {
-                "scenario_id": scenario_id,
-                "is_azure_agent": False,  # Mark as local-only agent
-                "instructions": instructions,
-                "created_at": datetime.now(),
-                "model": model,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            }
+            self.agents[agent_id] = self._create_agent_config(
+                scenario_id=scenario_id,
+                agent_id=agent_id,
+                is_azure_agent=False,
+                instructions=instructions,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
 
             logger.info(f"Created local agent configuration: {agent_id}")
             return agent_id
@@ -292,6 +267,42 @@ CRITICAL INTERACTION GUIDELINES:
         except Exception as e:
             logger.error(f"Error creating local agent: {e}")
             raise
+
+    def _generate_agent_name(self, scenario_id: str) -> str:
+        """Generate a unique agent name."""
+        short_uuid = uuid.uuid4().hex[:UUID_SHORT_LENGTH]
+        return f"{AZURE_AGENT_NAME_PREFIX}-{scenario_id}-{short_uuid}"
+
+    def _generate_local_agent_id(self, scenario_id: str) -> str:
+        """Generate a unique local agent ID."""
+        short_uuid = uuid.uuid4().hex[:UUID_SHORT_LENGTH]
+        return f"{AGENT_ID_PREFIX}-{scenario_id}-{short_uuid}"
+
+    def _create_agent_config(
+        self,
+        scenario_id: str,
+        agent_id: str,
+        is_azure_agent: bool,
+        instructions: str,
+        model: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> Dict[str, Any]:
+        """Create standardized agent configuration."""
+        config = {
+            "scenario_id": scenario_id,
+            "is_azure_agent": is_azure_agent,
+            "instructions": instructions,
+            "created_at": datetime.now(),
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+
+        if is_azure_agent:
+            config["azure_agent_id"] = agent_id
+
+        return config
 
     def get_agent(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -316,7 +327,6 @@ CRITICAL INTERACTION GUIDELINES:
             if agent_id in self.agents:
                 agent_config = self.agents[agent_id]
 
-                # Only delete from Azure if it's an Azure-created agent
                 if agent_config.get("is_azure_agent") and self.project_client:
                     try:
                         with self.project_client:
@@ -325,7 +335,6 @@ CRITICAL INTERACTION GUIDELINES:
                     except Exception as e:
                         logger.error(f"Error deleting Azure agent: {e}")
 
-                # Remove from local storage
                 del self.agents[agent_id]
                 logger.info(f"Deleted agent from local storage: {agent_id}")
         except Exception as e:

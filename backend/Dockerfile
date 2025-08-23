@@ -1,17 +1,12 @@
-# Multi-stage build for VoiceLab Sales Trainer
-# Stage 1: Build the frontend
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Configure npm to bypass SSL issues in build environment
 RUN npm config set strict-ssl false
 
-# Copy frontend package files and install dependencies
 COPY frontend/package*.json ./
 RUN npm ci --legacy-peer-deps --include=dev
 
-# Copy frontend source code and build
 COPY frontend/src/ ./src/
 COPY frontend/public/ ./public/
 COPY frontend/index.html ./
@@ -22,13 +17,11 @@ COPY frontend/eslint.config.js ./
 COPY frontend/.prettierrc ./
 COPY frontend/.prettierignore ./
 
-# Build the frontend
 RUN npx --yes tsc && npx --yes vite build
 
-# Stage 2: Python runtime (using Ubuntu 20.04 base to avoid OpenSSL 3 issues)
+# Stage 2: Python runtime (using Ubuntu 20.04 base to avoid OpenSSL 3 issues with speechsdk)
 FROM python:3.11-slim-bullseye
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=src/app.py \
@@ -36,7 +29,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org pypi.python.org" \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -45,31 +37,22 @@ RUN apt-get update && apt-get install -y \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
 RUN useradd --create-home --shell /bin/bash app
 
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
 
-# Copy application code
 COPY --chown=app:app backend/src/ ./src/
 COPY --chown=app:app data/scenarios/ ./data/scenarios/
 
-# Copy built frontend from previous stage
 COPY --from=frontend-builder --chown=app:app /app/static/ ./static/
 
-# Switch to non-root user
 USER app
-
-# Expose port
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/config || exit 1
 
-# Start the application
 CMD ["python", "src/app.py"]
