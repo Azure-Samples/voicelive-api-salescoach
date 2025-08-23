@@ -114,7 +114,7 @@ export function ScenarioList({
 
   // Build the complete scenario list
   const allScenarios = generatedScenario
-    ? [...scenarios.filter((s) => !s.is_graph_scenario), generatedScenario]
+    ? [...scenarios.filter(s => !s.is_graph_scenario), generatedScenario]
     : scenarios
 
   return (
@@ -123,7 +123,7 @@ export function ScenarioList({
         Select Training Scenario
       </Text>
       <div className={styles.cardsGrid}>
-        {allScenarios.map((scenario) => {
+        {allScenarios.map(scenario => {
           const isSelected = selectedScenario === scenario.id
           const isGraphLoading =
             scenario.is_graph_scenario &&

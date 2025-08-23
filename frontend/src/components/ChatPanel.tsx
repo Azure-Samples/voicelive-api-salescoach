@@ -127,7 +127,7 @@ export function ChatPanel({
             {messages
               .slice()
               .reverse()
-              .map((msg) => (
+              .map(msg => (
                 <div
                   key={msg.id}
                   className={`${styles.message} ${

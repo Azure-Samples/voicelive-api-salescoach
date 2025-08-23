@@ -71,7 +71,7 @@ export default function App() {
   const { playAudio } = useAudioPlayer()
   const activeScenario =
     selectedScenarioData ||
-    scenarios.find((s) => s.id === selectedScenario) ||
+    scenarios.find(s => s.id === selectedScenario) ||
     null
 
   const handleWebRTCMessage = useCallback((msg: any) => {
