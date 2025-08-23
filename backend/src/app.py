@@ -1,7 +1,7 @@
-#---------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 #  Copyright (c) Microsoft Corporation. All rights reserved.
 #  Licensed under the MIT License. See LICENSE in the project root for license information.
-#--------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 
 """Flask application for the upskilling agent."""
 
@@ -128,7 +128,9 @@ def analyze_conversation():
     if not scenario_id or not transcript:
         return jsonify({"error": TRANSCRIPT_REQUIRED}), HTTP_BAD_REQUEST
 
-    return _perform_conversation_analysis(scenario_id, transcript, audio_data, reference_text)
+    return _perform_conversation_analysis(
+        scenario_id, transcript, audio_data, reference_text
+    )
 
 
 def _log_analyze_request(scenario_id, transcript, reference_text):

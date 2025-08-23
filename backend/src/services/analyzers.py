@@ -1,7 +1,7 @@
-#---------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 #  Copyright (c) Microsoft Corporation. All rights reserved.
 #  Licensed under the MIT License. See LICENSE in the project root for license information.
-#--------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 
 """Analysis components for conversation and pronunciation assessment."""
 
@@ -226,7 +226,9 @@ class ConversationAnalyzer:
             logger.error(f"Error in evaluation model: {e}")
             return None
 
-    def _build_evaluation_messages(self, evaluation_prompt: str) -> List[Dict[str, str]]:
+    def _build_evaluation_messages(
+        self, evaluation_prompt: str
+    ) -> List[Dict[str, str]]:
         """Build the messages for the evaluation API call."""
         return [
             {
@@ -350,9 +352,13 @@ class PronunciationAssessor:
         wav_buffer.seek(0)
         return wav_buffer.read()
 
-    def _log_assessment_info(self, wav_audio: bytes, reference_text: Optional[str]) -> None:
+    def _log_assessment_info(
+        self, wav_audio: bytes, reference_text: Optional[str]
+    ) -> None:
         """Log information about the assessment being performed."""
-        logger.info(f"Starting pronunciation assessment with audio size: {len(wav_audio)} bytes")
+        logger.info(
+            f"Starting pronunciation assessment with audio size: {len(wav_audio)} bytes"
+        )
         logger.info(f"Reference text: {reference_text or 'None'}")
         logger.info(f"Speech key configured: {'Yes' if self.speech_key else 'No'}")
         logger.info(f"Speech region: {self.speech_region}")
@@ -365,7 +371,9 @@ class PronunciationAssessor:
         speech_config.speech_recognition_language = SPEECH_LANGUAGE
         return speech_config
 
-    def _create_pronunciation_config(self, reference_text: Optional[str]) -> speechsdk.PronunciationAssessmentConfig:
+    def _create_pronunciation_config(
+        self, reference_text: Optional[str]
+    ) -> speechsdk.PronunciationAssessmentConfig:
         """Create pronunciation assessment configuration."""
         pronunciation_config = speechsdk.PronunciationAssessmentConfig(
             reference_text=reference_text or "",
@@ -464,7 +472,9 @@ class PronunciationAssessor:
         audio_config = self._create_audio_config(wav_audio)
 
         speech_recognizer = speechsdk.SpeechRecognizer(
-            speech_config=speech_config, audio_config=audio_config, language=SPEECH_LANGUAGE
+            speech_config=speech_config,
+            audio_config=audio_config,
+            language=SPEECH_LANGUAGE,
         )
         pronunciation_config.apply_to(speech_recognizer)
 

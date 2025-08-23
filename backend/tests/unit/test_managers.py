@@ -75,18 +75,18 @@ class TestAgentManager:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch('managers.config') as mock_config:
+        with patch("managers.config") as mock_config:
             mock_config.__getitem__.side_effect = lambda key: {
-                'use_azure_ai_agents': False,
-                'project_endpoint': '',
-                'model_deployment_name': 'gpt-4o'
-            }.get(key, '')
+                "use_azure_ai_agents": False,
+                "project_endpoint": "",
+                "model_deployment_name": "gpt-4o",
+            }.get(key, "")
             mock_config.get.side_effect = lambda key, default=None: {
-                'use_azure_ai_agents': False,
-                'project_endpoint': '',
-                'model_deployment_name': 'gpt-4o'
+                "use_azure_ai_agents": False,
+                "project_endpoint": "",
+                "model_deployment_name": "gpt-4o",
             }.get(key, default)
-            with patch('managers.DefaultAzureCredential'):
+            with patch("managers.DefaultAzureCredential"):
                 self.agent_manager = AgentManager()
 
     @patch("managers.config")
@@ -114,21 +114,23 @@ class TestAgentManager:
         assert "Test instructions" in manager.agents[agent_id]["instructions"]
         assert manager.BASE_INSTRUCTIONS in manager.agents[agent_id]["instructions"]
 
-    @patch('managers.config')
-    @patch('managers.DefaultAzureCredential')
-    @patch('managers.AIProjectClient')
-    def test_create_agent_success_azure(self, mock_ai_client, mock_credential, mock_config):
+    @patch("managers.config")
+    @patch("managers.DefaultAzureCredential")
+    @patch("managers.AIProjectClient")
+    def test_create_agent_success_azure(
+        self, mock_ai_client, mock_credential, mock_config
+    ):
         """Test successful Azure agent creation."""
         # Mock configuration
         mock_config.__getitem__.side_effect = lambda key: {
-            'use_azure_ai_agents': True,
-            'project_endpoint': 'https://test.endpoint',
-            'model_deployment_name': 'gpt-4o'
-        }.get(key, '')
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, "")
         mock_config.get.side_effect = lambda key, default=None: {
-            'use_azure_ai_agents': True,
-            'project_endpoint': 'https://test.endpoint',
-            'model_deployment_name': 'gpt-4o'
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
         }.get(key, default)
 
         # Mock AI Project Client with context manager support
@@ -148,7 +150,7 @@ class TestAgentManager:
         scenario_data = {
             "messages": [{"content": "Test instructions"}],
             "model": "gpt-4o",
-            "modelParameters": {"temperature": 0.8, "max_tokens": 1500}
+            "modelParameters": {"temperature": 0.8, "max_tokens": 1500},
         }
 
         agent_id = agent_manager.create_agent("test-scenario", scenario_data)
@@ -208,21 +210,21 @@ class TestAgentManager:
         manager.delete_agent("test-agent")
         assert "test-agent" not in manager.agents
 
-    @patch('managers.config')
-    @patch('managers.DefaultAzureCredential')
-    @patch('managers.AIProjectClient')
+    @patch("managers.config")
+    @patch("managers.DefaultAzureCredential")
+    @patch("managers.AIProjectClient")
     def test_delete_agent_azure(self, mock_ai_client, mock_credential, mock_config):
         """Test Azure agent deletion."""
         # Mock configuration
         mock_config.__getitem__.side_effect = lambda key: {
-            'use_azure_ai_agents': True,
-            'project_endpoint': 'https://test.endpoint',
-            'model_deployment_name': 'gpt-4o'
-        }.get(key, '')
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, "")
         mock_config.get.side_effect = lambda key, default=None: {
-            'use_azure_ai_agents': True,
-            'project_endpoint': 'https://test.endpoint',
-            'model_deployment_name': 'gpt-4o'
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
         }.get(key, default)
 
         # Mock AI Project Client with context manager support
@@ -245,7 +247,7 @@ class TestAgentManager:
             "model": "gpt-4o",
             "temperature": 0.7,
             "max_tokens": 2000,
-            "azure_agent_id": agent_id
+            "azure_agent_id": agent_id,
         }
 
         # Delete the agent

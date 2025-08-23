@@ -1,7 +1,7 @@
-#---------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
 #  Copyright (c) Microsoft Corporation. All rights reserved.
 #  Licensed under the MIT License. See LICENSE in the project root for license information.
-#--------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
 
 """WebSocket handling for voice proxy connections."""
 
@@ -147,8 +147,8 @@ class VoiceProxyHandler:
 
     def _build_base_azure_url(self) -> str:
         """Build the base Azure WebSocket URL."""
-        resource_name = config['azure_ai_resource_name']
-        project_name = config['azure_ai_project_name']
+        resource_name = config["azure_ai_resource_name"]
+        project_name = config["azure_ai_project_name"]
         client_request_id = uuid.uuid4()
 
         return (
@@ -187,10 +187,12 @@ class VoiceProxyHandler:
                 "modalities": DEFAULT_MODALITIES,
                 "turn_detection": {"type": DEFAULT_TURN_DETECTION_TYPE},
                 "input_audio_noise_reduction": {"type": DEFAULT_NOISE_REDUCTION_TYPE},
-                "input_audio_echo_cancellation": {"type": DEFAULT_ECHO_CANCELLATION_TYPE},
+                "input_audio_echo_cancellation": {
+                    "type": DEFAULT_ECHO_CANCELLATION_TYPE
+                },
                 "avatar": {
                     "character": DEFAULT_AVATAR_CHARACTER,
-                    "style": DEFAULT_AVATAR_STYLE
+                    "style": DEFAULT_AVATAR_STYLE,
                 },
             },
         }
