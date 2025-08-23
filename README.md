@@ -43,42 +43,19 @@ Voice Live API Salescoach is a demo application showcasing how AI-based training
 
 ### Local Development
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Azure-Samples/voicelive-api-salescoach.git
-   cd voicelive-api-salescoach
-   ```
+This project includes a dev container for easy setup and a build script for streamlined development.
 
-2. **Set up environment variables**
-   ```bash
-   cp config/.env.example .env
-   # Edit .env with your Azure credentials
-   ```
+1. **Use Dev Container** (Recommended)
+   - Open in VS Code and select "Reopen in Container" when prompted
+   - All dependencies and tools are pre-configured
 
-3. **Install dependencies**
+2. **Build and run**
    ```bash
-   # Backend dependencies
-   cd backend
-   pip install -r requirements.txt
-   cd ..
+   # Build the application
+   ./scripts/build.sh
    
-   # Frontend dependencies
-   cd frontend
-   npm install
-   cd ..
-   ```
-
-4. **Build the frontend**
-   ```bash
-   cd frontend
-   npm run build
-   cd ..
-   ```
-
-5. **Start the application**
-   ```bash
-   cd backend
-   python src/app.py
+   # Start the server
+   cd backend && python src/app.py
    ```
 
 Visit `http://localhost:8000` to start training!
@@ -96,29 +73,6 @@ Visit `http://localhost:8000` to start training!
    ```
 3. **Access your application**:
    The deployment will output the URL where your application is running.
-
-
-## Development
-
-### Code Quality & Linting
-
-This project uses linting tools to maintain code quality:
-
-- **Python**: flake8 and black for linting and formatting
-- **TypeScript**: ESLint and Prettier for linting and formatting
-
-#### Available Scripts
-
-```bash
-# Run linters
-npm run lint
-
-# Format code
-npm run format
-
-# Run tests
-npm run test
-```
 
 ## Demo 
 
