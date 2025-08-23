@@ -28,6 +28,7 @@ API_CONFIG_ENDPOINT = "/api/config"
 API_SCENARIOS_ENDPOINT = "/api/scenarios"
 API_AGENTS_CREATE_ENDPOINT = "/api/agents/create"
 API_ANALYZE_ENDPOINT = "/api/analyze"
+API_GRAPH_SCENARIO_ENDPOINT = "/api/scenarios/graph"
 
 # Error messages
 SCENARIO_ID_REQUIRED = "scenario_id is required"
@@ -93,6 +94,7 @@ def create_agent():
 
     scenario = scenario_manager.get_scenario(scenario_id)
     if not scenario:
+        logger.error(f"Scenario not found: {scenario_id}. Available scenarios: {list(scenario_manager.scenarios.keys())} + generated: {list(scenario_manager.generated_scenarios.keys())}")
         return jsonify({"error": SCENARIO_NOT_FOUND}), HTTP_NOT_FOUND
 
     try:
@@ -193,6 +195,30 @@ def voice_proxy(ws):
         asyncio.set_event_loop(loop)
 
     loop.run_until_complete(voice_proxy_handler.handle_connection(ws))
+
+
+@app.route(API_GRAPH_SCENARIO_ENDPOINT, methods=["POST"])
+def generate_graph_scenario():
+    """Generate a scenario based on Graph API data."""
+    import time
+    import json
+    from pathlib import Path
+
+    # Simulate API delay
+    time.sleep(2)
+
+    try:
+        # Load canned Graph API response
+        canned_file = Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
+        with open(canned_file) as f:
+            graph_data = json.load(f)
+
+        scenario = scenario_manager.generate_scenario_from_graph(graph_data)
+
+        return jsonify(scenario)
+    except Exception as e:
+        logger.error(f"Failed to generate Graph scenario: {e}")
+        return jsonify({"error": str(e)}), HTTP_INTERNAL_SERVER_ERROR
 
 
 def main():

@@ -46,6 +46,7 @@ RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.pytho
 
 COPY --chown=app:app backend/src/ ./src/
 COPY --chown=app:app data/scenarios/ ./data/scenarios/
+COPY --chown=app:app data/graph-api-canned.json ./data/
 
 COPY --from=frontend-builder --chown=app:app /app/static/ ./static/
 

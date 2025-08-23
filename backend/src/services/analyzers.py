@@ -149,6 +149,10 @@ class ConversationAnalyzer:
         """
         logger.info(f"Starting conversation analysis for scenario: {scenario_id}")
 
+        # Handle generated scenarios
+        if scenario_id == "graph-generated":
+            scenario_id = "graph-generated"
+
         evaluation_scenario = self.evaluation_scenarios.get(scenario_id)
         if not evaluation_scenario:
             logger.error(f"Evaluation scenario not found: {scenario_id}")

@@ -55,4 +55,13 @@ export const api = {
     if (!res.ok) throw new Error('Analysis failed')
     return res.json()
   },
+
+  async generateGraphScenario(): Promise<Scenario> {
+    const res = await fetch('/api/scenarios/graph', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!res.ok) throw new Error('Failed to generate Graph scenario')
+    return res.json()
+  },
 }

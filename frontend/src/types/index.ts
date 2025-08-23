@@ -7,6 +7,8 @@ export interface Scenario {
   id: string
   name: string
   description: string
+  is_graph_scenario?: boolean
+  generated_from_graph?: boolean
 }
 
 export interface Message {
@@ -49,6 +51,10 @@ export interface Assessment {
   }
 }
 
+export interface AgentConfig {
+  agent_id: string
+  scenario_id: string
+}
 export interface AgentConfig {
   agent_id: string
   scenario_id: string

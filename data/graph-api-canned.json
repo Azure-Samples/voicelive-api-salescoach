@@ -1,0 +1,154 @@
+{
+    "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('sample')/events",
+    "value": [
+        {
+            "id": "evt-001",
+            "subject": "AI Foundry Introduction & Integration Options - Contoso",
+            "bodyPreview": "Intro to Azure AI Foundry, deployment patterns, and Contoso integration scenarios for customer service.",
+            "start": {
+                "dateTime": "2025-09-08T09:00:00Z",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2025-09-08T10:00:00Z",
+                "timeZone": "UTC"
+            },
+            "location": {
+                "displayName": "Microsoft Teams Meeting"
+            },
+            "onlineMeetingUrl": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_ai_foundry_demo",
+            "organizer": {
+                "emailAddress": {
+                    "name": "Aymen Furter",
+                    "address": "aymen.furter@microsoft.com"
+                }
+            },
+            "attendees": [
+                {
+                    "emailAddress": {
+                        "name": "Sarah Johnson",
+                        "address": "sarah.johnson@contoso.com"
+                    },
+                    "type": "required"
+                },
+                {
+                    "emailAddress": {
+                        "name": "Michael Chen",
+                        "address": "michael.chen@contoso.com"
+                    },
+                    "type": "required"
+                }
+            ]
+        },
+        {
+            "id": "evt-002",
+            "subject": "Voice Live API - Technical Deep Dive for Contoso",
+            "bodyPreview": "Deep dive on Voice Live API: real-time voice processing, integration patterns for Contoso's contact center, and security considerations.",
+            "start": {
+                "dateTime": "2025-09-09T14:00:00Z",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2025-09-09T15:30:00Z",
+                "timeZone": "UTC"
+            },
+            "location": {
+                "displayName": "Microsoft Teams Meeting"
+            },
+            "onlineMeetingUrl": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_voice_api_deepdive",
+            "organizer": {
+                "emailAddress": {
+                    "name": "Aymen Furter",
+                    "address": "aymen.furter@microsoft.com"
+                }
+            },
+            "attendees": [
+                {
+                    "emailAddress": {
+                        "name": "David Thompson",
+                        "address": "david.thompson@contoso.com"
+                    },
+                    "type": "required"
+                },
+                {
+                    "emailAddress": {
+                        "name": "Lisa Wang",
+                        "address": "lisa.wang@contoso.com"
+                    },
+                    "type": "required"
+                }
+            ]
+        },
+        {
+            "id": "evt-003",
+            "subject": "AI Foundry Integration Planning — Contoso Pilot",
+            "bodyPreview": "Workshop to map Contoso pilot requirements to AI Foundry components, infra needs, and timeline for a proof-of-concept.",
+            "start": {
+                "dateTime": "2025-09-15T08:30:00Z",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2025-09-15T10:00:00Z",
+                "timeZone": "UTC"
+            },
+            "location": {
+                "displayName": "Contoso HQ / Teams"
+            },
+            "onlineMeetingUrl": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_foundry_planning",
+            "organizer": {
+                "emailAddress": {
+                    "name": "Aymen Furter",
+                    "address": "aymen.furter@microsoft.com"
+                }
+            },
+            "attendees": [
+                {
+                    "emailAddress": {
+                        "name": "Product Owner - Contoso",
+                        "address": "po@contoso.com"
+                    },
+                    "type": "required"
+                },
+                {
+                    "emailAddress": {
+                        "name": "Infra Lead - Contoso",
+                        "address": "infra.lead@contoso.com"
+                    },
+                    "type": "required"
+                }
+            ]
+        },
+        {
+            "id": "evt-004",
+            "subject": "AI Voice Live API Pilot Kickoff - Contoso",
+            "bodyPreview": "Kickoff for Voice Live API pilot: success criteria, POC scope, test scenarios, and next steps.",
+            "start": {
+                "dateTime": "2025-09-22T13:00:00Z",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2025-09-22T14:00:00Z",
+                "timeZone": "UTC"
+            },
+            "location": {
+                "displayName": "Microsoft Teams Meeting"
+            },
+            "onlineMeetingUrl": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_voice_pilot_kickoff",
+            "organizer": {
+                "emailAddress": {
+                    "name": "Aymen Furter",
+                    "address": "aymen.furter@microsoft.com"
+                }
+            },
+            "attendees": [
+                {
+                    "emailAddress": {
+                        "name": "Contoso Pilot Team",
+                        "address": "pilot.team@contoso.com"
+                    },
+                    "type": "required"
+                }
+            ]
+        }
+    ]
+}

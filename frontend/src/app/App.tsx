@@ -64,11 +64,12 @@ export default function App() {
   const [showAssessment, setShowAssessment] = useState(false)
   const [currentAgent, setCurrentAgent] = useState<string | null>(null)
   const [assessment, setAssessment] = useState<Assessment | null>(null)
+  const [selectedScenarioData, setSelectedScenarioData] = useState<any>(null)
 
   const { scenarios, selectedScenario, setSelectedScenario, loading } =
     useScenarios()
   const { playAudio } = useAudioPlayer()
-  const activeScenario = scenarios.find(s => s.id === selectedScenario) || null
+  const activeScenario = selectedScenarioData || scenarios.find(s => s.id === selectedScenario) || null
 
   const handleWebRTCMessage = useCallback((msg: any) => {
     if (msg.type === 'session.updated') {
@@ -136,6 +137,16 @@ export default function App() {
       console.error('Failed to create agent:', error)
     }
   }
+
+  // Handle scenario selection including generated scenarios
+  const handleScenarioSelect = useCallback((scenarioId: string, scenarioData?: any) => {
+    setSelectedScenario(scenarioId)
+    if (scenarioData) {
+      setSelectedScenarioData(scenarioData)
+    } else {
+      setSelectedScenarioData(null)
+    }
+  }, [setSelectedScenario])
 
   const handleAnalyze = async () => {
     if (!selectedScenario) return

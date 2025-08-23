@@ -1,0 +1,15 @@
+name: "Graph Generated Scenario Evaluation"
+description: "Evaluation prompt for AI-generated scenarios based on Microsoft Graph data"
+model: "gpt-4o"
+modelParameters:
+  temperature: 0.1
+  max_tokens: 4000
+
+messages:
+  - role: system
+    content: |
+      You are an expert conversation evaluator specializing in sales scenarios. 
+      
+      Your task is to evaluate a sales conversation where the salesperson.
+      
+      Evaluate the salesperson's performance, not the client's responses.

@@ -16,6 +16,7 @@ from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
 
 from config import config
+from .graph_scenario_generator import GraphScenarioGenerator
 
 # Constants
 ROLE_PLAY_FILE_SUFFIX = "-role-play.prompt.yml"
@@ -42,6 +43,8 @@ class ScenarioManager:
         """
         self.scenario_dir = self._determine_scenario_directory(scenario_dir)
         self.scenarios = self._load_scenarios()
+        self.graph_generator = GraphScenarioGenerator()
+        self.generated_scenarios = {}
 
     def _determine_scenario_directory(self, scenario_dir: Optional[Path]) -> Path:
         """Determine the correct scenario directory path."""
@@ -100,7 +103,11 @@ class ScenarioManager:
         Returns:
             Optional[Dict[str, Any]]: Scenario data or None if not found
         """
-        return self.scenarios.get(scenario_id)
+        scenario = self.scenarios.get(scenario_id)
+        if scenario:
+            return scenario
+
+        return self.generated_scenarios.get(scenario_id)
 
     def list_scenarios(self) -> List[Dict[str, str]]:
         """
@@ -109,7 +116,7 @@ class ScenarioManager:
         Returns:
             List[Dict[str, str]]: List of scenario summaries
         """
-        return [
+        scenarios = [
             {
                 "id": scenario_id,
                 "name": scenario_data.get("name", "Unknown"),
@@ -117,6 +124,31 @@ class ScenarioManager:
             }
             for scenario_id, scenario_data in self.scenarios.items()
         ]
+
+        scenarios.append({
+            "id": "graph-api",
+            "name": "Personalized Scenario",
+            "description": "AI-generated scenario based on your upcoming meetings and context from Microsoft Graph",
+            "is_graph_scenario": True
+        })
+
+        return scenarios
+
+    def generate_scenario_from_graph(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate a scenario based on Microsoft Graph API data.
+
+        Args:
+            graph_data: The Graph API response data
+
+        Returns:
+            Dict[str, Any]: Generated scenario
+        """
+        scenario = self.graph_generator.generate_scenario_from_graph(graph_data)
+
+        self.generated_scenarios[scenario["id"]] = scenario
+
+        return scenario
 
 
 class AgentManager:
