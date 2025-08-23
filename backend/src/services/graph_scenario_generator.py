@@ -41,7 +41,9 @@ class GraphScenarioGenerator:
             logger.error(f"Failed to initialize OpenAI client for scenarios: {e}")
             return None
 
-    def generate_scenario_from_graph(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_scenario_from_graph(
+        self, graph_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Generate a scenario based on Microsoft Graph API data.
 
@@ -59,14 +61,11 @@ class GraphScenarioGenerator:
                     attendee["emailAddress"]["name"]
                     for attendee in event.get("attendees", [])[:3]
                 ]
-                meetings.append({
-                    "subject": subject,
-                    "attendees": attendees
-                })
+                meetings.append({"subject": subject, "attendees": attendees})
 
         scenario_content = self._create_graph_scenario_content(meetings)
 
-        first_sentence = scenario_content.split('.')[0] + '.'
+        first_sentence = scenario_content.split(".")[0] + "."
         if len(first_sentence) > 100:
             first_sentence = first_sentence[:100] + "..."
 
@@ -76,11 +75,8 @@ class GraphScenarioGenerator:
             "description": first_sentence,
             "messages": [{"content": scenario_content}],
             "model": "gpt-4o",
-            "modelParameters": {
-                "temperature": 0.7,
-                "max_tokens": 2000
-            },
-            "generated_from_graph": True
+            "modelParameters": {"temperature": 0.7, "max_tokens": 2000},
+            "generated_from_graph": True,
         }
 
     def _format_meeting_list(self, meetings: List[Dict[str, Any]]) -> str:
@@ -106,15 +102,12 @@ class GraphScenarioGenerator:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at creating realistic business role-play scenarios for sales training. Generate engaging, professional scenarios that help salespeople prepare for real meetings."
+                    "content": "You are an expert at creating realistic business role-play scenarios for sales training. Generate engaging, professional scenarios that help salespeople prepare for real meetings.",
                 },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-            max_tokens=1500
+            max_tokens=1500,
         )
 
         generated_content = response.choices[0].message.content.strip()

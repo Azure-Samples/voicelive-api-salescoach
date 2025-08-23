@@ -125,16 +125,20 @@ class ScenarioManager:
             for scenario_id, scenario_data in self.scenarios.items()
         ]
 
-        scenarios.append({
-            "id": "graph-api",
-            "name": "Personalized Scenario",
-            "description": "AI-generated scenario based on your upcoming meetings and context from Microsoft Graph",
-            "is_graph_scenario": True
-        })
+        scenarios.append(
+            {
+                "id": "graph-api",
+                "name": "Personalized Scenario",
+                "description": "AI-generated scenario based on your upcoming meetings and context from Microsoft Graph",
+                "is_graph_scenario": True,
+            }
+        )
 
         return scenarios
 
-    def generate_scenario_from_graph(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_scenario_from_graph(
+        self, graph_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Generate a scenario based on Microsoft Graph API data.
 

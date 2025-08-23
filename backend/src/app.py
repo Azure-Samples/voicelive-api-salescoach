@@ -94,7 +94,9 @@ def create_agent():
 
     scenario = scenario_manager.get_scenario(scenario_id)
     if not scenario:
-        logger.error(f"Scenario not found: {scenario_id}. Available scenarios: {list(scenario_manager.scenarios.keys())} + generated: {list(scenario_manager.generated_scenarios.keys())}")
+        logger.error(
+            f"Scenario not found: {scenario_id}. Available scenarios: {list(scenario_manager.scenarios.keys())} + generated: {list(scenario_manager.generated_scenarios.keys())}"
+        )
         return jsonify({"error": SCENARIO_NOT_FOUND}), HTTP_NOT_FOUND
 
     try:
@@ -209,7 +211,9 @@ def generate_graph_scenario():
 
     try:
         # Load canned Graph API response
-        canned_file = Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
+        canned_file = (
+            Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
+        )
         with open(canned_file) as f:
             graph_data = json.load(f)
 

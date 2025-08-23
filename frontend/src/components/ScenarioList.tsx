@@ -73,6 +73,7 @@ interface Props {
   selectedScenario: string | null
   onSelect: (id: string) => void
   onStart: () => void
+  onScenarioGenerated?: (scenario: Scenario) => void
 }
 
 export function ScenarioList({
@@ -80,6 +81,7 @@ export function ScenarioList({
   selectedScenario,
   onSelect,
   onStart,
+  onScenarioGenerated,
 }: Props) {
   const styles = useStyles()
   const [loadingGraph, setLoadingGraph] = useState(false)
@@ -90,8 +92,14 @@ export function ScenarioList({
       setLoadingGraph(true)
       try {
         const generated = await api.generateGraphScenario()
-        setGeneratedScenario(generated)
-        onSelect(generated.id)
+        const personalizedScenario = {
+          ...generated,
+          name: 'Personalized Scenario',
+          description: generated.description.split('.')[0] + '.'
+        }
+        setGeneratedScenario(personalizedScenario)
+        onScenarioGenerated?.(personalizedScenario)
+        onSelect(personalizedScenario.id)
       } catch (error) {
         console.error('Failed to generate Graph scenario:', error)
       } finally {

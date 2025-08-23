@@ -138,16 +138,6 @@ export default function App() {
     }
   }
 
-  // Handle scenario selection including generated scenarios
-  const handleScenarioSelect = useCallback((scenarioId: string, scenarioData?: any) => {
-    setSelectedScenario(scenarioId)
-    if (scenarioData) {
-      setSelectedScenarioData(scenarioData)
-    } else {
-      setSelectedScenarioData(null)
-    }
-  }, [setSelectedScenario])
-
   const handleAnalyze = async () => {
     if (!selectedScenario) return
 
@@ -179,6 +169,10 @@ export default function App() {
     }
   }
 
+  const handleScenarioGenerated = useCallback((scenario: any) => {
+    setSelectedScenarioData(scenario)
+  }, [])
+
   return (
     <div className={styles.container}>
       <Dialog
@@ -195,6 +189,7 @@ export default function App() {
                 selectedScenario={selectedScenario}
                 onSelect={setSelectedScenario}
                 onStart={handleStart}
+                onScenarioGenerated={handleScenarioGenerated}
               />
             )}
           </DialogBody>
