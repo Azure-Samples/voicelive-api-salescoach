@@ -211,10 +211,14 @@ def generate_graph_scenario():
 
     try:
         docker_canned_file = Path("/app/data/graph-api-canned.json")
-        dev_canned_file = Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
-        
-        canned_file = docker_canned_file if docker_canned_file.exists() else dev_canned_file
-        
+        dev_canned_file = (
+            Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
+        )
+
+        canned_file = (
+            docker_canned_file if docker_canned_file.exists() else dev_canned_file
+        )
+
         if not canned_file.exists():
             logger.error(f"Canned Graph API file not found at {canned_file}")
             graph_data = {"value": []}

@@ -69,7 +69,7 @@ class TestScenarioManager:
         assert scenarios[0]["id"] == "scenario1"
         assert scenarios[1]["id"] == "scenario2"
         assert scenarios[2]["id"] == "graph-api"
-        assert scenarios[2]["is_graph_scenario"] == True
+        assert scenarios[2]["is_graph_scenario"] is True
 
 
 class TestAgentManager:
