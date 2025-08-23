@@ -1,20 +1,20 @@
 <p align="center">
-  <h1 align="center">VoiceLab Sales Trainer</h1>
+   <h1 align="center">Voice Live API: AI Salescoach</h1>
 </p>
-<p align="center">AI-powered voice training for sales professionals, built on Azure.</p>
+<p align="center">A demo application showcasing AI-powered voice training for sales professionals, built on Azure.</p>
 <p align="center">
-  <a href="https://github.com/Azure-Samples/voicelive-api-salescoach"><img alt="GitHub" src="https://img.shields.io/github/stars/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
-  <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
-  <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" /></a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach"><img alt="GitHub" src="https://img.shields.io/github/stars/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
+   <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" /></a>
 </p>
 
-![VoiceLab Sales Trainer in Action](docs/assets/preview.png)
+![Voice Live API Salescoach in Action](docs/assets/preview.png)
 
 ---
 
 ## Overview
 
-VoiceLab Sales Trainer is a demo application showcasing how AI-based training could be used in sales education using Azure AI services. Practice real-world sales scenarios with AI-powered virtual customers, receive instant feedback on your performance, and improve your sales skills through immersive voice conversations.
+Voice Live API Salescoach is a demo application showcasing how AI-based training could be used in sales education using Azure AI services. Practice real-world sales scenarios with AI-powered virtual customers, receive instant feedback on your performance, and improve your sales skills through immersive voice conversations.
 
 ### Features
 
@@ -38,44 +38,10 @@ VoiceLab Sales Trainer is a demo application showcasing how AI-based training co
 
 ### Prerequisites
 
-- **Docker**: Install [Docker](https://www.docker.com/get-started) to run the application in a containerized environment.
 - **Node.js**: Install [Node.js](https://nodejs.org/) for the frontend development.
 - **Python**: Install [Python](https://www.python.org/downloads/) for the backend development.
 
-### Option 1: Docker (Recommended)
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Azure-Samples/voicelive-api-salescoach.git
-   cd voicelive-api-salescoach
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   cp config/.env.example .env
-   # Edit .env with your Azure credentials
-   ```
-
-3. **Run with Docker Compose**
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Or run with Docker directly**
-   ```bash
-   docker build -t voicelive-api-salescoach .
-   docker run -p 8000:8000 --env-file .env voicelive-api-salescoach
-   ```
-
-Visit `http://localhost:8000` to start training!
-
-### Option 2: Local Development
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Azure-Samples/voicelive-api-salescoach.git
-   cd voicelive-api-salescoach
-   ```
+### Local Development
 
 1. **Clone the repository**
    ```bash
@@ -117,7 +83,7 @@ Visit `http://localhost:8000` to start training!
 
 Visit `http://localhost:8000` to start training!
 
-## Quick Start with Azure Developer CLI
+### Deploy to Azure
 
 1. **Initialize Azure Developer CLI**:
    ```bash
@@ -154,18 +120,6 @@ npm run format
 npm run test
 ```
 
-#### Manual Linting
-
-```bash
-# Python linting
-flake8 . --config=.flake8
-black . --config pyproject.toml
-
-# TypeScript linting
-npx eslint . --ext .ts,.tsx
-npx prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}"
-```
-
 ## Demo 
 
 1. **Choose a Scenario** - Select from various sales situations (cold calling, objection handling, etc.)
@@ -180,14 +134,38 @@ npx prettier --write "src/**/*.{ts,tsx,js,jsx,json,css,md}"
 
 ## Architecture
 
-The following diagram shows the high-level architecture of VoiceLab Sales Trainer and how it integrates with various Azure AI services:
+<p align="center">
+The following diagram shows the high-level architecture of Voice Live API Salescoach and how it integrates with various Azure AI services:
+</p>
 
-![Architecture Diagram](docs/assets/architecture.png)
+<p align="center">
+<img src="docs/assets/architecture.png" alt="Architecture Diagram" />
+</p>
 
 ## Contributing
 
-This is a demo application showcasing Azure AI capabilities. Feel free to fork and experiment!
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
 
-## License
+When you submit a pull request, a CLA bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
 
-MIT License - See [LICENSE.md](LICENSE.md) file for details
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Security
+
+Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations, which include [Microsoft](https://github.com/Microsoft), [Azure](https://github.com/Azure), [DotNet](https://github.com/dotnet), [AspNet](https://github.com/aspnet) and [Xamarin](https://github.com/xamarin).
+
+If you believe you have found a security vulnerability in any Microsoft-owned repository that meets [Microsoft's definition of a security vulnerability](https://aka.ms/security.md/definition), please report it to us as described in [SECURITY.md](SECURITY.md).
+
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
+trademarks or logos is subject to and must follow 
+[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+Any use of third-party trademarks or logos are subject to those third-party's policies.
