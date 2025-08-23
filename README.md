@@ -1,14 +1,11 @@
-<p align="center>
+<p align="center">
    <h1 align="center">Voice Live API: AI Salescoach</h1>
 </p>
 <p align="center">A demo application showcasing AI-powered voice training for sales professionals, built on Azure.</p>
 <p align="center">
-   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach"><img alt="GitHub" src="https://img.shields.io/github/stars/Azure-Samples/voicelive-api-salescoach?style=flat-square" height="30" /></a>
-   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE.md"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" height="30" /></a>
-   <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" height="30" /></a>
-   <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fvoicelive-api-salescoach%2Frefs%2Fheads%2Fmain%2Finfra%2Fdeployment.json">
-     <img height="30" src="https://aka.ms/deploytoazurebutton" alt="Deploy to Azure">
-   </a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg" style="height:27px; vertical-align:middle;"/></a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/actions/workflows/lint-and-test.yml"><img alt="Build Status" src="https://github.com/Azure-Samples/voicelive-api-salescoach/actions/workflows/lint-and-test.yml/badge.svg" style="height:27px; vertical-align:middle;"/></a>&nbsp;
+   <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fvoicelive-api-salescoach%2Frefs%2Fheads%2Fmain%2Finfra%2Fdeployment.json"><img src="https://aka.ms/deploytoazurebutton" alt="Deploy to Azure" style="height:27px; vertical-align:middle;"/></a>&nbsp;
 </p>
 
 ![Voice Live API Salescoach in Action](docs/assets/preview.png)
