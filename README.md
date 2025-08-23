@@ -4,7 +4,7 @@
 <p align="center">A demo application showcasing AI-powered voice training for sales professionals, built on Azure.</p>
 <p align="center">
    <a href="https://github.com/Azure-Samples/voicelive-api-salescoach"><img alt="GitHub" src="https://img.shields.io/github/stars/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
-   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE.md"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
    <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" /></a>
 </p>
 
