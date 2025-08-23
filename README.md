@@ -25,6 +25,14 @@ Voice Live API Salescoach is a demo application showcasing how AI-based training
 
 ![Performance Analysis Dashboard](docs/assets/analysis.png)
 
+## Demo
+
+See the Voice Live API Salescoach in action:
+
+<div>
+  <video controls src="docs/assets/demo.mp4" muted="false"></video>
+</div>
+
 ### How It Works
 
 1. **Choose a Scenario** - Select from various industry-specific sales situations
