@@ -76,7 +76,7 @@ Visit `http://localhost:8000` to start training!
 
 <table>
 <tr>
-<td width="500">
+<td width="400">
 <img src="docs/assets/architecture.png" alt="Architecture Diagram" width="500"/>
 </td>
 <td>
