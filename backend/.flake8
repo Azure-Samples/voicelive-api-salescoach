@@ -12,6 +12,7 @@ exclude =
     .pytest_cache
 ignore = 
     E203,
+    E265,
     E501,
     W503,
     W504
