@@ -25,25 +25,37 @@ Voice Live API Salescoach is a demo application showcasing how AI-based training
 
 ![Performance Analysis Dashboard](docs/assets/analysis.png)
 
-### Tech Stack
+### How It Works
 
-- **Azure AI Foundry** - Agent orchestration and management
-- **Azure OpenAI** - GPT-4o for LLM responses and performance analysis 
-- **Azure Voice Live API** - Real-time speech-to-speech conversations with AI agents
-- **Azure Speech Services** - Post-conversation fluency and pronunciation analysis
-- **React + Fluent UI** - Modern, accessible user interface
-- **Python Flask** - Backend API and WebSocket handling
+1. **Choose a Scenario** - Select from various industry-specific sales situations
+2. **Start the Conversation** - Click the microphone to start your simulation
+3. **Engage with AI** - The virtual customer responds realistically based on the scenario
+4. **Receive Feedback** - Get instant analysis on your performance including:
+   - Speaking tone and style
+   - Content quality
+   - Needs assessment
+   - Value proposition delivery
+   - Objection handling skills
 
 ## Getting Started 
 
-### Prerequisites
+### Deploy to Azure
 
-- **Node.js**: Install [Node.js](https://nodejs.org/) for the frontend development.
-- **Python**: Install [Python](https://www.python.org/downloads/) for the backend development.
+1. **Initialize Azure Developer CLI**:
+   ```bash
+   azd init
+   ```
+
+2. **Deploy to Azure**:
+   ```bash
+   azd up
+   ```
+3. **Access your application**:
+   The deployment will output the URL where your application is running.
 
 ### Local Development
 
-This project includes a dev container for easy setup and a build script for streamlined development.
+This project includes a dev container for easy setup and a build script for  development.
 
 1. **Use Dev Container** (Recommended)
    - Open in VS Code and select "Reopen in Container" when prompted
@@ -60,41 +72,30 @@ This project includes a dev container for easy setup and a build script for stre
 
 Visit `http://localhost:8000` to start training!
 
-### Deploy to Azure
-
-1. **Initialize Azure Developer CLI**:
-   ```bash
-   azd init
-   ```
-
-2. **Deploy to Azure**:
-   ```bash
-   azd up
-   ```
-3. **Access your application**:
-   The deployment will output the URL where your application is running.
-
-## Demo 
-
-1. **Choose a Scenario** - Select from various sales situations (cold calling, objection handling, etc.)
-2. **Start the Conversation** - Click the microphone and begin your sales pitch
-3. **Engage with AI** - The virtual customer responds realistically based on the scenario
-4. **Receive Feedback** - Get instant analysis on your performance including:
-   - Speaking tone and style
-   - Content quality
-   - Needs assessment
-   - Value proposition delivery
-   - Objection handling skills
-
 ## Architecture
 
-<p align="center">
-The following diagram shows the high-level architecture of Voice Live API Salescoach and how it integrates with various Azure AI services:
-</p>
+<table>
+<tr>
+<td width="500">
+<img src="docs/assets/architecture.png" alt="Architecture Diagram" width="500"/>
+</td>
+<td>
 
-<p align="center">
-<img src="docs/assets/architecture.png" alt="Architecture Diagram" />
-</p>
+The application leverages multiple Azure AI services to deliver real-time voice-based sales training:
+
+- **Azure AI Foundry** - AI platform including:
+  - Voice Live API for real-time speech-to-speech conversations and avatar simulation
+  - Large language models (GPT-4o) as underlying LLM for performance analysis
+  - Speech Services for post-conversation pronunciation and fluency assessment
+  - Optional AI Agent Service
+- **React + Fluent UI** - Modern web interface
+- **Python Flask** - Backend API and WebSocket communication
+
+**Conversation Flow:** User speech → Voice Live API → GPT-4o processing → AI agent response → Performance analysis → Detailed feedback
+
+</td>
+</tr>
+</table>
 
 ## Contributing
 
