@@ -210,12 +210,17 @@ def generate_graph_scenario():
     time.sleep(2)
 
     try:
-        # Load canned Graph API response
-        canned_file = (
-            Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
-        )
-        with open(canned_file) as f:
-            graph_data = json.load(f)
+        docker_canned_file = Path("/app/data/graph-api-canned.json")
+        dev_canned_file = Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
+        
+        canned_file = docker_canned_file if docker_canned_file.exists() else dev_canned_file
+        
+        if not canned_file.exists():
+            logger.error(f"Canned Graph API file not found at {canned_file}")
+            graph_data = {"value": []}
+        else:
+            with open(canned_file) as f:
+                graph_data = json.load(f)
 
         scenario = scenario_manager.generate_scenario_from_graph(graph_data)
 

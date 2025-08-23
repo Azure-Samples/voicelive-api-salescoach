@@ -65,9 +65,11 @@ class TestScenarioManager:
         }
 
         scenarios = manager.list_scenarios()
-        assert len(scenarios) == 2
+        assert len(scenarios) == 3
         assert scenarios[0]["id"] == "scenario1"
-        assert scenarios[0]["name"] == "Scenario 1"
+        assert scenarios[1]["id"] == "scenario2"
+        assert scenarios[2]["id"] == "graph-api"
+        assert scenarios[2]["is_graph_scenario"] == True
 
 
 class TestAgentManager:

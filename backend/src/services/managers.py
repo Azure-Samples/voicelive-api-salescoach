@@ -16,7 +16,7 @@ from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
 
 from config import config
-from .graph_scenario_generator import GraphScenarioGenerator
+from services.graph_scenario_generator import GraphScenarioGenerator
 
 # Constants
 ROLE_PLAY_FILE_SUFFIX = "-role-play.prompt.yml"

@@ -85,7 +85,9 @@ export function ScenarioList({
 }: Props) {
   const styles = useStyles()
   const [loadingGraph, setLoadingGraph] = useState(false)
-  const [generatedScenario, setGeneratedScenario] = useState<Scenario | null>(null)
+  const [generatedScenario, setGeneratedScenario] = useState<Scenario | null>(
+    null
+  )
 
   const handleScenarioClick = async (scenario: Scenario) => {
     if (scenario.is_graph_scenario && !scenario.generated_from_graph) {
@@ -95,7 +97,7 @@ export function ScenarioList({
         const personalizedScenario = {
           ...generated,
           name: 'Personalized Scenario',
-          description: generated.description.split('.')[0] + '.'
+          description: generated.description.split('.')[0] + '.',
         }
         setGeneratedScenario(personalizedScenario)
         onScenarioGenerated?.(personalizedScenario)
@@ -111,8 +113,8 @@ export function ScenarioList({
   }
 
   // Build the complete scenario list
-  const allScenarios = generatedScenario 
-    ? [...scenarios.filter(s => !s.is_graph_scenario), generatedScenario]
+  const allScenarios = generatedScenario
+    ? [...scenarios.filter((s) => !s.is_graph_scenario), generatedScenario]
     : scenarios
 
   return (
@@ -121,9 +123,12 @@ export function ScenarioList({
         Select Training Scenario
       </Text>
       <div className={styles.cardsGrid}>
-        {allScenarios.map(scenario => {
+        {allScenarios.map((scenario) => {
           const isSelected = selectedScenario === scenario.id
-          const isGraphLoading = scenario.is_graph_scenario && loadingGraph && !scenario.generated_from_graph
+          const isGraphLoading =
+            scenario.is_graph_scenario &&
+            loadingGraph &&
+            !scenario.generated_from_graph
 
           if (isGraphLoading) {
             return (
@@ -131,7 +136,8 @@ export function ScenarioList({
                 <div className={styles.loadingCard}>
                   <Spinner size="medium" />
                   <Text size={300}>
-                    Analyzing your calendar and generating personalized scenario...
+                    Analyzing your calendar and generating personalized
+                    scenario...
                   </Text>
                 </div>
               </Card>
@@ -147,7 +153,8 @@ export function ScenarioList({
               <CardHeader
                 header={
                   <Text weight="semibold">
-                    {(scenario.is_graph_scenario || scenario.generated_from_graph) && (
+                    {(scenario.is_graph_scenario ||
+                      scenario.generated_from_graph) && (
                       <span className={styles.graphIcon}>✨</span>
                     )}
                     {scenario.name}

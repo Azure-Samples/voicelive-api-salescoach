@@ -1,11 +1,14 @@
-<p align="center">
+<p align="center>
    <h1 align="center">Voice Live API: AI Salescoach</h1>
 </p>
 <p align="center">A demo application showcasing AI-powered voice training for sales professionals, built on Azure.</p>
 <p align="center">
-   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach"><img alt="GitHub" src="https://img.shields.io/github/stars/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
-   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE.md"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" /></a>
-   <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" /></a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach"><img alt="GitHub" src="https://img.shields.io/github/stars/Azure-Samples/voicelive-api-salescoach?style=flat-square" height="30" /></a>
+   <a href="https://github.com/Azure-Samples/voicelive-api-salescoach/blob/main/LICENSE.md"><img alt="License" src="https://img.shields.io/github/license/Azure-Samples/voicelive-api-salescoach?style=flat-square" height="30" /></a>
+   <a href="https://azure.microsoft.com"><img alt="Azure" src="https://img.shields.io/badge/Azure-AI%20Foundry-0078D4?style=flat-square" height="30" /></a>
+   <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fvoicelive-api-salescoach%2Frefs%2Fheads%2Fmain%2Finfra%2Fdeployment.json">
+     <img height="30" src="https://aka.ms/deploytoazurebutton" alt="Deploy to Azure">
+   </a>
 </p>
 
 ![Voice Live API Salescoach in Action](docs/assets/preview.png)
@@ -123,4 +126,5 @@ This project may contain trademarks or logos for projects, products, or services
 trademarks or logos is subject to and must follow 
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+Any use of third-party trademarks or logos are subject to those third-party's policies.
 Any use of third-party trademarks or logos are subject to those third-party's policies.

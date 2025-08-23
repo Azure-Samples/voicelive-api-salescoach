@@ -69,7 +69,10 @@ export default function App() {
   const { scenarios, selectedScenario, setSelectedScenario, loading } =
     useScenarios()
   const { playAudio } = useAudioPlayer()
-  const activeScenario = selectedScenarioData || scenarios.find(s => s.id === selectedScenario) || null
+  const activeScenario =
+    selectedScenarioData ||
+    scenarios.find((s) => s.id === selectedScenario) ||
+    null
 
   const handleWebRTCMessage = useCallback((msg: any) => {
     if (msg.type === 'session.updated') {

@@ -121,7 +121,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          image: 'ghcr.io/Azure-Samples/voicelive-api-salescoach:main-d8b44cc'
+          image: 'ghcr.io/azure-samples/voicelive-api-salescoach:main'
           name: 'voicelab-sales-training'
           resources: {
             cpu: json('1.0')

@@ -1,0 +1,867 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environmentName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "metadata": {
+                "description": "Name of the environment which is used to generate a short unique hash used in all resources."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "swedencentral",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "principalId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Id of the user or app to assign application roles"
+            }
+        },
+        "gptModelName": {
+            "type": "string",
+            "defaultValue": "gpt-4o",
+            "metadata": {
+                "description": "Azure OpenAI GPT Model Name"
+            }
+        },
+        "gptModelVersion": {
+            "type": "string",
+            "defaultValue": "2024-08-06",
+            "metadata": {
+                "description": "Azure OpenAI GPT Model Version"
+            }
+        },
+        "gptDeploymentName": {
+            "type": "string",
+            "defaultValue": "gpt-4o",
+            "metadata": {
+                "description": "Azure OpenAI GPT Model Deployment Name"
+            }
+        },
+        "openAiModelCapacity": {
+            "type": "int",
+            "defaultValue": 10,
+            "metadata": {
+                "description": "Azure OpenAI Model Capacity"
+            }
+        },
+        "embeddingModelCapacity": {
+            "type": "int",
+            "defaultValue": 10,
+            "metadata": {
+                "description": "Azure OpenAI Embedding Model Capacity"
+            }
+        }
+    },
+    "variables": {
+        "resourceToken": "[toLower(uniqueString(subscription().subscriptionId, parameters('environmentName'), parameters('location')))]",
+        "tags": {
+            "azd-env-name": "[parameters('environmentName')]"
+        },
+        "containerAppName": "[format('vst-{0}', variables('resourceToken'))]",
+        "aiFoundryResourceName": "[format('aifoundry-voicelab-{0}', variables('resourceToken'))]",
+        "speechServiceName": "[format('speech-voicelab-{0}', variables('resourceToken'))]",
+        "containerAppsEnvironmentName": "[format('cae-voicelab-{0}', variables('resourceToken'))]",
+        "resourceGroupName": "[format('rg-{0}', parameters('environmentName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2021-04-01",
+            "name": "[variables('resourceGroupName')]",
+            "location": "[parameters('location')]",
+            "tags": "[variables('tags')]"
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "aiFoundryDeployment",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('aiFoundryResourceName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    },
+                    "gptDeploymentName": {
+                        "value": "[parameters('gptDeploymentName')]"
+                    },
+                    "gptModelName": {
+                        "value": "[parameters('gptModelName')]"
+                    },
+                    "gptModelVersion": {
+                        "value": "[parameters('gptModelVersion')]"
+                    },
+                    "gptCapacity": {
+                        "value": "[parameters('openAiModelCapacity')]"
+                    },
+                    "embeddingCapacity": {
+                        "value": "[parameters('embeddingModelCapacity')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object"
+                        },
+                        "gptDeploymentName": {
+                            "type": "string"
+                        },
+                        "gptModelName": {
+                            "type": "string"
+                        },
+                        "gptModelVersion": {
+                            "type": "string"
+                        },
+                        "gptCapacity": {
+                            "type": "int"
+                        },
+                        "embeddingCapacity": {
+                            "type": "int"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.CognitiveServices/accounts",
+                            "apiVersion": "2024-10-01",
+                            "name": "[parameters('name')]",
+                            "location": "[parameters('location')]",
+                            "tags": "[parameters('tags')]",
+                            "kind": "AIServices",
+                            "sku": {
+                                "name": "S0"
+                            },
+                            "identity": {
+                                "type": "SystemAssigned"
+                            },
+                            "properties": {
+                                "customSubDomainName": "[parameters('name')]",
+                                "publicNetworkAccess": "Enabled"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.CognitiveServices/accounts/deployments",
+                            "apiVersion": "2024-10-01",
+                            "name": "[format('{0}/{1}', parameters('name'), parameters('gptDeploymentName'))]",
+                            "sku": {
+                                "name": "Standard",
+                                "capacity": "[parameters('gptCapacity')]"
+                            },
+                            "properties": {
+                                "model": {
+                                    "format": "OpenAI",
+                                    "name": "[parameters('gptModelName')]",
+                                    "version": "[parameters('gptModelVersion')]"
+                                },
+                                "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
+                            },
+                            "dependsOn": [
+                                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]"
+                            ]
+                        },
+                        {
+                            "type": "Microsoft.CognitiveServices/accounts/deployments",
+                            "apiVersion": "2024-10-01",
+                            "name": "[format('{0}/text-embedding-ada-002', parameters('name'))]",
+                            "sku": {
+                                "name": "Standard",
+                                "capacity": "[parameters('embeddingCapacity')]"
+                            },
+                            "properties": {
+                                "model": {
+                                    "format": "OpenAI",
+                                    "name": "text-embedding-ada-002"
+                                },
+                                "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
+                            },
+                            "dependsOn": [
+                                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
+                                "[resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('name'), parameters('gptDeploymentName'))]"
+                            ]
+                        }
+                    ],
+                    "outputs": {
+                        "endpoint": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))).endpoint]"
+                        },
+                        "id": {
+                            "type": "string",
+                            "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]"
+                        },
+                        "identityPrincipalId": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), '2024-10-01', 'Full').identity.principalId]"
+                        },
+                        "name": {
+                            "type": "string",
+                            "value": "[parameters('name')]"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "speechServiceDeployment",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('speechServiceName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.CognitiveServices/accounts",
+                            "apiVersion": "2024-10-01",
+                            "name": "[parameters('name')]",
+                            "location": "[parameters('location')]",
+                            "tags": "[parameters('tags')]",
+                            "kind": "SpeechServices",
+                            "sku": {
+                                "name": "S0"
+                            },
+                            "properties": {
+                                "customSubDomainName": "[parameters('name')]",
+                                "publicNetworkAccess": "Enabled"
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "id": {
+                            "type": "string",
+                            "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]"
+                        },
+                        "name": {
+                            "type": "string",
+                            "value": "[parameters('name')]"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "containerAppsEnvironmentDeployment",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('containerAppsEnvironmentName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "tags": {
+                        "value": "[variables('tags')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.App/managedEnvironments",
+                            "apiVersion": "2024-03-01",
+                            "name": "[parameters('name')]",
+                            "location": "[parameters('location')]",
+                            "tags": "[parameters('tags')]",
+                            "properties": {}
+                        }
+                    ],
+                    "outputs": {
+                        "id": {
+                            "type": "string",
+                            "value": "[resourceId('Microsoft.App/managedEnvironments', parameters('name'))]"
+                        },
+                        "name": {
+                            "type": "string",
+                            "value": "[parameters('name')]"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "containerAppDeployment",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "name": {
+                        "value": "[variables('containerAppName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "tags": {
+                        "value": "[union(variables('tags'), createObject('azd-service-name', 'voicelab-sales-training'))]"
+                    },
+                    "managedEnvironmentId": {
+                        "value": "[reference('containerAppsEnvironmentDeployment').outputs.id.value]"
+                    },
+                    "aiFoundryEndpoint": {
+                        "value": "[reference('aiFoundryDeployment').outputs.endpoint.value]"
+                    },
+                    "aiFoundryName": {
+                        "value": "[reference('aiFoundryDeployment').outputs.name.value]"
+                    },
+                    "speechServiceName": {
+                        "value": "[reference('speechServiceDeployment').outputs.name.value]"
+                    },
+                    "gptDeploymentName": {
+                        "value": "[parameters('gptDeploymentName')]"
+                    },
+                    "subscriptionId": {
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    "resourceGroupName": {
+                        "value": "[variables('resourceGroupName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object"
+                        },
+                        "managedEnvironmentId": {
+                            "type": "string"
+                        },
+                        "aiFoundryEndpoint": {
+                            "type": "string"
+                        },
+                        "aiFoundryName": {
+                            "type": "string"
+                        },
+                        "speechServiceName": {
+                            "type": "string"
+                        },
+                        "gptDeploymentName": {
+                            "type": "string"
+                        },
+                        "subscriptionId": {
+                            "type": "string"
+                        },
+                        "resourceGroupName": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.App/containerApps",
+                            "apiVersion": "2024-03-01",
+                            "name": "[parameters('name')]",
+                            "location": "[parameters('location')]",
+                            "tags": "[parameters('tags')]",
+                            "identity": {
+                                "type": "SystemAssigned"
+                            },
+                            "properties": {
+                                "managedEnvironmentId": "[parameters('managedEnvironmentId')]",
+                                "configuration": {
+                                    "ingress": {
+                                        "external": true,
+                                        "targetPort": 8000,
+                                        "transport": "http"
+                                    },
+                                    "secrets": [
+                                        {
+                                            "name": "ai-foundry-api-key",
+                                            "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiFoundryName')), '2024-10-01').key1]"
+                                        },
+                                        {
+                                            "name": "speech-api-key",
+                                            "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', parameters('speechServiceName')), '2024-10-01').key1]"
+                                        }
+                                    ]
+                                },
+                                "template": {
+                                    "containers": [
+                                        {
+                                            "image": "ghcr.io/azure-samples/voicelive-api-salescoach:main",
+                                            "name": "voicelab-sales-training",
+                                            "resources": {
+                                                "cpu": 1.0,
+                                                "memory": "2.0Gi"
+                                            },
+                                            "env": [
+                                                {
+                                                    "name": "AZURE_OPENAI_ENDPOINT",
+                                                    "value": "[parameters('aiFoundryEndpoint')]"
+                                                },
+                                                {
+                                                    "name": "AZURE_OPENAI_API_KEY",
+                                                    "secretRef": "ai-foundry-api-key"
+                                                },
+                                                {
+                                                    "name": "PROJECT_ENDPOINT",
+                                                    "value": "[format('{0}api/projects/default-project', parameters('aiFoundryEndpoint'))]"
+                                                },
+                                                {
+                                                    "name": "MODEL_DEPLOYMENT_NAME",
+                                                    "value": "[parameters('gptDeploymentName')]"
+                                                },
+                                                {
+                                                    "name": "AZURE_SPEECH_KEY",
+                                                    "secretRef": "speech-api-key"
+                                                },
+                                                {
+                                                    "name": "AZURE_SPEECH_REGION",
+                                                    "value": "[parameters('location')]"
+                                                },
+                                                {
+                                                    "name": "AZURE_AI_RESOURCE_NAME",
+                                                    "value": "[parameters('aiFoundryName')]"
+                                                },
+                                                {
+                                                    "name": "AZURE_AI_REGION",
+                                                    "value": "[parameters('location')]"
+                                                },
+                                                {
+                                                    "name": "SUBSCRIPTION_ID",
+                                                    "value": "[parameters('subscriptionId')]"
+                                                },
+                                                {
+                                                    "name": "RESOURCE_GROUP_NAME",
+                                                    "value": "[parameters('resourceGroupName')]"
+                                                },
+                                                {
+                                                    "name": "USE_AZURE_AI_AGENTS",
+                                                    "value": "false"
+                                                },
+                                                {
+                                                    "name": "PORT",
+                                                    "value": "8000"
+                                                },
+                                                {
+                                                    "name": "HOST",
+                                                    "value": "0.0.0.0"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "scale": {
+                                        "minReplicas": 1,
+                                        "maxReplicas": 3
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "outputs": {
+                        "name": {
+                            "type": "string",
+                            "value": "[parameters('name')]"
+                        },
+                        "uri": {
+                            "type": "string",
+                            "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', parameters('name'))).configuration.ingress.fqdn)]"
+                        },
+                        "identityPrincipalId": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('name')), '2024-03-01', 'Full').identity.principalId]"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]",
+                "aiFoundryDeployment",
+                "speechServiceDeployment",
+                "containerAppsEnvironmentDeployment"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "containerAppAzureAIDeveloperRole",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference('containerAppDeployment').outputs.identityPrincipalId.value]"
+                    },
+                    "roleDefinitionId": {
+                        "value": "64702f94-c441-49e6-a78b-ef80e0188fee"
+                    },
+                    "principalType": {
+                        "value": "ServicePrincipal"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "roleDefinitionId": {
+                            "type": "string"
+                        },
+                        "principalType": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[guid(resourceGroup().id, parameters('principalId'), parameters('roleDefinitionId'))]",
+                            "properties": {
+                                "principalId": "[parameters('principalId')]",
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
+                                "principalType": "[parameters('principalType')]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]",
+                "containerAppDeployment"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "containerAppCognitiveServicesUserRole",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference('containerAppDeployment').outputs.identityPrincipalId.value]"
+                    },
+                    "roleDefinitionId": {
+                        "value": "a97b65f3-24c7-4388-baec-2e87135dc908"
+                    },
+                    "principalType": {
+                        "value": "ServicePrincipal"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "roleDefinitionId": {
+                            "type": "string"
+                        },
+                        "principalType": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[guid(resourceGroup().id, parameters('principalId'), parameters('roleDefinitionId'))]",
+                            "properties": {
+                                "principalId": "[parameters('principalId')]",
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
+                                "principalType": "[parameters('principalType')]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]",
+                "containerAppDeployment"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "containerAppCognitiveServicesOpenAIUserRole",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference('containerAppDeployment').outputs.identityPrincipalId.value]"
+                    },
+                    "roleDefinitionId": {
+                        "value": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"
+                    },
+                    "principalType": {
+                        "value": "ServicePrincipal"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "roleDefinitionId": {
+                            "type": "string"
+                        },
+                        "principalType": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[guid(resourceGroup().id, parameters('principalId'), parameters('roleDefinitionId'))]",
+                            "properties": {
+                                "principalId": "[parameters('principalId')]",
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
+                                "principalType": "[parameters('principalType')]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]",
+                "containerAppDeployment"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "userAzureAIDeveloperRole",
+            "condition": "[not(empty(parameters('principalId')))]",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "principalId": {
+                        "value": "[parameters('principalId')]"
+                    },
+                    "roleDefinitionId": {
+                        "value": "64702f94-c441-49e6-a78b-ef80e0188fee"
+                    },
+                    "principalType": {
+                        "value": "User"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "roleDefinitionId": {
+                            "type": "string"
+                        },
+                        "principalType": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[guid(resourceGroup().id, parameters('principalId'), parameters('roleDefinitionId'))]",
+                            "properties": {
+                                "principalId": "[parameters('principalId')]",
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
+                                "principalType": "[parameters('principalType')]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "userCognitiveServicesOpenAIUserRole",
+            "condition": "[not(empty(parameters('principalId')))]",
+            "resourceGroup": "[variables('resourceGroupName')]",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                    "principalId": {
+                        "value": "[parameters('principalId')]"
+                    },
+                    "roleDefinitionId": {
+                        "value": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"
+                    },
+                    "principalType": {
+                        "value": "User"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "principalId": {
+                            "type": "string"
+                        },
+                        "roleDefinitionId": {
+                            "type": "string"
+                        },
+                        "principalType": {
+                            "type": "string"
+                        }
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.Authorization/roleAssignments",
+                            "apiVersion": "2022-04-01",
+                            "name": "[guid(resourceGroup().id, parameters('principalId'), parameters('roleDefinitionId'))]",
+                            "properties": {
+                                "principalId": "[parameters('principalId')]",
+                                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleDefinitionId'))]",
+                                "principalType": "[parameters('principalType')]"
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups', variables('resourceGroupName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "AZURE_LOCATION": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        },
+        "AZURE_CONTAINER_APP_ENVIRONMENT_NAME": {
+            "type": "string",
+            "value": "[reference('containerAppsEnvironmentDeployment').outputs.name.value]"
+        },
+        "AZURE_CONTAINER_APP_NAME": {
+            "type": "string",
+            "value": "[reference('containerAppDeployment').outputs.name.value]"
+        },
+        "SERVICE_VOICELAB_SALES_TRAINING_URI": {
+            "type": "string",
+            "value": "[reference('containerAppDeployment').outputs.uri.value]"
+        },
+        "PROJECT_ENDPOINT": {
+            "type": "string",
+            "value": "[format('{0}api/projects/default-project', reference('aiFoundryDeployment').outputs.endpoint.value)]"
+        },
+        "AZURE_OPENAI_ENDPOINT": {
+            "type": "string",
+            "value": "[reference('aiFoundryDeployment').outputs.endpoint.value]"
+        },
+        "AZURE_SPEECH_REGION": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        },
+        "AI_FOUNDRY_RESOURCE_NAME": {
+            "type": "string",
+            "value": "[reference('aiFoundryDeployment').outputs.name.value]"
+        }
+    }
+}
