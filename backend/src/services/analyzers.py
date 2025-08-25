@@ -392,6 +392,7 @@ class PronunciationAssessor:
 
         push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audio_format)
         push_stream.write(wav_audio)
+        push_stream.close()
 
         return speechsdk.audio.AudioConfig(stream=push_stream)
 
@@ -488,11 +489,6 @@ class PronunciationAssessor:
                     speech_recognizer.close()
                 except Exception as e:
                     logger.error(f"Error stopping continuous recognition: {e}")
-            try:
-                push_stream = audio_config.stream
-                push_stream.
-            except Exception as e:
-                logger.error(f"Error closing push stream: {e}")
 
     def _extract_word_details(self, result) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
