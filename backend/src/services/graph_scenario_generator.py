@@ -33,7 +33,7 @@ class GraphScenarioGenerator:
                 return None
 
             return AzureOpenAI(
-                api_version="2024-12-01-preview",
+                api_version=config["api_version"],
                 azure_endpoint=endpoint,
                 api_key=api_key,
             )
@@ -74,7 +74,7 @@ class GraphScenarioGenerator:
             "name": "Your Personalized Sales Scenario",
             "description": first_sentence,
             "messages": [{"content": scenario_content}],
-            "model": "gpt-4o",
+            "model": config["model_deployment_name"],
             "modelParameters": {"temperature": 0.7, "max_tokens": 2000},
             "generated_from_graph": True,
         }
@@ -98,7 +98,7 @@ class GraphScenarioGenerator:
         prompt = self._build_scenario_generation_prompt(meetings)
 
         response = self.openai_client.chat.completions.create(
-            model="gpt-4o",
+            model=config["model_deployment_name"],
             messages=[
                 {
                     "role": "system",

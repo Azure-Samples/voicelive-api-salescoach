@@ -46,10 +46,6 @@ AUDIO_CHANNELS = 1
 AUDIO_SAMPLE_WIDTH = 2
 AUDIO_BITS_PER_SAMPLE = 16
 
-# Model constants
-GPT_MODEL_NAME = "gpt-4o"
-SPEECH_LANGUAGE = "en-US"
-
 # Assessment constants
 MAX_STRENGTHS_COUNT = 3
 MAX_IMPROVEMENTS_COUNT = 3
@@ -122,7 +118,7 @@ class ConversationAnalyzer:
                 return None
 
             client = AzureOpenAI(
-                api_version="2024-12-01-preview",
+                api_version=config["api_version"],
                 azure_endpoint=endpoint,
                 api_key=api_key,
             )
@@ -141,17 +137,14 @@ class ConversationAnalyzer:
         Analyze a conversation transcript.
 
         Args:
-            scenario_id: The scenario identifier
+            scenario_id: The scenario identifier.
+                         For AI generated scenario, use "graph_generated"
             transcript: The conversation transcript to analyze
 
         Returns:
             Optional[Dict[str, Any]]: Analysis results or None if analysis fails
         """
         logger.info(f"Starting conversation analysis for scenario: {scenario_id}")
-
-        # Handle generated scenarios
-        if scenario_id == "graph-generated":
-            scenario_id = "graph-generated"
 
         evaluation_scenario = self.evaluation_scenarios.get(scenario_id)
         if not evaluation_scenario:
@@ -207,13 +200,14 @@ class ConversationAnalyzer:
         Returns:
             Optional[Dict[str, Any]]: Evaluation results or None if call fails
         """
+
         try:
             evaluation_prompt = self._build_evaluation_prompt(scenario, transcript)
 
             completion = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self.openai_client.chat.completions.create(
-                    model=GPT_MODEL_NAME,
+                    model=config["model_deployment_name"],
                     messages=self._build_evaluation_messages(evaluation_prompt),
                     response_format=self._get_response_format(),
                 ),
@@ -345,16 +339,15 @@ class PronunciationAssessor:
 
     def _create_wav_audio(self, audio_bytes: bytearray) -> bytes:
         """Create WAV format audio from raw PCM bytes."""
-        wav_buffer = io.BytesIO()
+        with io.BytesIO() as wav_buffer:
+            with wave.open(wav_buffer, "wb") as wav_file:
+                wav_file.setnchannels(AUDIO_CHANNELS)
+                wav_file.setsampwidth(AUDIO_SAMPLE_WIDTH)
+                wav_file.setframerate(AUDIO_SAMPLE_RATE)
+                wav_file.writeframes(audio_bytes)
 
-        with wave.open(wav_buffer, "wb") as wav_file:
-            wav_file.setnchannels(AUDIO_CHANNELS)
-            wav_file.setsampwidth(AUDIO_SAMPLE_WIDTH)
-            wav_file.setframerate(AUDIO_SAMPLE_RATE)
-            wav_file.writeframes(audio_bytes)
-
-        wav_buffer.seek(0)
-        return wav_buffer.read()
+            wav_buffer.seek(0)
+            return wav_buffer.read()
 
     def _log_assessment_info(
         self, wav_audio: bytes, reference_text: Optional[str]
@@ -372,7 +365,7 @@ class PronunciationAssessor:
         speech_config = speechsdk.SpeechConfig(
             subscription=self.speech_key, region=self.speech_region
         )
-        speech_config.speech_recognition_language = SPEECH_LANGUAGE
+        speech_config.speech_recognition_language = config["azure_speech_language"]
         return speech_config
 
     def _create_pronunciation_config(
@@ -399,7 +392,6 @@ class PronunciationAssessor:
 
         push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audio_format)
         push_stream.write(wav_audio)
-        push_stream.close()
 
         return speechsdk.audio.AudioConfig(stream=push_stream)
 
@@ -475,19 +467,33 @@ class PronunciationAssessor:
         pronunciation_config = self._create_pronunciation_config(reference_text)
         audio_config = self._create_audio_config(wav_audio)
 
-        speech_recognizer = speechsdk.SpeechRecognizer(
-            speech_config=speech_config,
-            audio_config=audio_config,
-            language=SPEECH_LANGUAGE,
-        )
-        pronunciation_config.apply_to(speech_recognizer)
+        speech_recognizer = None
+        try:
+            speech_recognizer = speechsdk.SpeechRecognizer(
+                speech_config=speech_config,
+                audio_config=audio_config,
+                language=config["azure_speech_language"],
+            )
+            pronunciation_config.apply_to(speech_recognizer)
 
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, speech_recognizer.recognize_once
-        )
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, speech_recognizer.recognize_once
+            )
 
-        pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
-        return self._build_assessment_result(pronunciation_result, result)
+            pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
+            return self._build_assessment_result(pronunciation_result, result)
+        finally:
+            if speech_recognizer is not None:
+                try:
+                    speech_recognizer.close()
+                except Exception as e:
+                    logger.error(f"Error stopping continuous recognition: {e}")
+            try:
+                push_stream = audio_config.stream
+                push_stream.close()
+            except Exception as e:
+                logger.error(f"Error closing push stream: {e}")
+
 
     def _extract_word_details(self, result) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
