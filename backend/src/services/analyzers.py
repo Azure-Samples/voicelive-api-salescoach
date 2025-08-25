@@ -50,7 +50,6 @@ AUDIO_BITS_PER_SAMPLE = 16
 MAX_STRENGTHS_COUNT = 3
 MAX_IMPROVEMENTS_COUNT = 3
 
-
 class ConversationAnalyzer:
     """Analyzes sales conversations using Azure OpenAI."""
 
