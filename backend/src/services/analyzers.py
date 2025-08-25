@@ -50,6 +50,7 @@ AUDIO_BITS_PER_SAMPLE = 16
 MAX_STRENGTHS_COUNT = 3
 MAX_IMPROVEMENTS_COUNT = 3
 
+
 class ConversationAnalyzer:
     """Analyzes sales conversations using Azure OpenAI."""
 
@@ -489,10 +490,9 @@ class PronunciationAssessor:
                     logger.error(f"Error stopping continuous recognition: {e}")
             try:
                 push_stream = audio_config.stream
-                push_stream.close()
+                push_stream.
             except Exception as e:
                 logger.error(f"Error closing push stream: {e}")
-
 
     def _extract_word_details(self, result) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
