@@ -53,7 +53,7 @@ class GraphScenarioGenerator:
         Returns:
             Dict[str, Any]: Generated scenario
         """
-        meetings = []
+        meetings: List[Dict[str, Any]] = []
         if "value" in graph_data:
             for event in graph_data["value"][:3]:
                 subject = event.get("subject", "Meeting")
@@ -110,7 +110,8 @@ class GraphScenarioGenerator:
             max_tokens=1500,
         )
 
-        generated_content = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        generated_content = content.strip() if content is not None else ""
         return generated_content
 
     def _build_scenario_generation_prompt(self, meetings: List[Dict[str, Any]]) -> str:

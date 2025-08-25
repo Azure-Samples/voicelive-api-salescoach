@@ -14,7 +14,7 @@ import wave
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-import azure.cognitiveservices.speech as speechsdk
+import azure.cognitiveservices.speech as speechsdk # pyright: ignore[reportMissingTypeStubs]
 import yaml
 from openai import AzureOpenAI
 
@@ -54,7 +54,7 @@ MAX_IMPROVEMENTS_COUNT = 3
 class ConversationAnalyzer:
     """Analyzes sales conversations using Azure OpenAI."""
 
-    def __init__(self, scenario_dir: Path = None):
+    def __init__(self, scenario_dir: Optional[Path] = None):
         """
         Initialize the conversation analyzer.
 
@@ -83,7 +83,7 @@ class ConversationAnalyzer:
         Returns:
             Dict[str, Any]: Dictionary of evaluation scenarios keyed by ID
         """
-        scenarios = {}
+        scenarios: Dict[str, Any] = {}
 
         if not self.scenario_dir.exists():
             logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
@@ -201,15 +201,20 @@ class ConversationAnalyzer:
             Optional[Dict[str, Any]]: Evaluation results or None if call fails
         """
 
+        if not self.openai_client:
+            logger.error("OpenAI client not configured")
+            return None
+        openai_client = self.openai_client
+
         try:
             evaluation_prompt = self._build_evaluation_prompt(scenario, transcript)
 
             completion = await asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: self.openai_client.chat.completions.create(
+                lambda: openai_client.chat.completions.create(
                     model=config["model_deployment_name"],
-                    messages=self._build_evaluation_messages(evaluation_prompt),
-                    response_format=self._get_response_format(),
+                    messages=self._build_evaluation_messages(evaluation_prompt),  # pyright: ignore[reportArgumentType]
+                    response_format=self._get_response_format(),  # pyright: ignore[reportArgumentType]
                 ),
             )
 
@@ -397,7 +402,9 @@ class PronunciationAssessor:
         return speechsdk.audio.AudioConfig(stream=push_stream)
 
     def _build_assessment_result(
-        self, pronunciation_result: speechsdk.PronunciationAssessmentResult, result
+        self,
+        pronunciation_result: speechsdk.PronunciationAssessmentResult,
+        result: speechsdk.SpeechRecognitionResult
     ) -> Dict[str, Any]:
         """Build the final assessment result."""
         return {
@@ -468,38 +475,30 @@ class PronunciationAssessor:
         pronunciation_config = self._create_pronunciation_config(reference_text)
         audio_config = self._create_audio_config(wav_audio)
 
-        speech_recognizer = None
-        try:
-            speech_recognizer = speechsdk.SpeechRecognizer(
-                speech_config=speech_config,
-                audio_config=audio_config,
-                language=config["azure_speech_language"],
-            )
-            pronunciation_config.apply_to(speech_recognizer)
+        speech_recognizer = speechsdk.SpeechRecognizer(
+            speech_config=speech_config,
+            audio_config=audio_config,
+            language=config["azure_speech_language"],
+        )
+        pronunciation_config.apply_to(speech_recognizer)
 
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, speech_recognizer.recognize_once
-            )
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, speech_recognizer.recognize_once
+        )
 
-            pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
-            return self._build_assessment_result(pronunciation_result, result)
-        finally:
-            if speech_recognizer is not None:
-                try:
-                    speech_recognizer.close()
-                except Exception as e:
-                    logger.error(f"Error stopping continuous recognition: {e}")
+        pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
+        return self._build_assessment_result(pronunciation_result, result)
 
-    def _extract_word_details(self, result) -> List[Dict[str, Any]]:
+    def _extract_word_details(self, result: speechsdk.SpeechRecognitionResult) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
         try:
             json_result = json.loads(
-                result.properties.get(
-                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}"
-                )
+                result.properties.get( # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
+                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}" # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
+                ) # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
             )
 
-            words = []
+            words: List[Dict[str, Any]] = []
             if "NBest" in json_result and json_result["NBest"]:
                 for word_info in json_result["NBest"][0].get("Words", []):
                     words.append(
