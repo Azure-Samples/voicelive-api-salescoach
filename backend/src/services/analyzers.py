@@ -213,7 +213,9 @@ class ConversationAnalyzer:
                 None,
                 lambda: openai_client.chat.completions.create(
                     model=config["model_deployment_name"],
-                    messages=self._build_evaluation_messages(evaluation_prompt),  # pyright: ignore[reportArgumentType]
+                    messages=self._build_evaluation_messages(
+                        evaluation_prompt
+                    ),  # pyright: ignore[reportArgumentType]
                     response_format=self._get_response_format(),  # pyright: ignore[reportArgumentType]
                 ),
             )
@@ -404,7 +406,7 @@ class PronunciationAssessor:
     def _build_assessment_result(
         self,
         pronunciation_result: speechsdk.PronunciationAssessmentResult,
-        result: speechsdk.SpeechRecognitionResult
+        result: speechsdk.SpeechRecognitionResult,
     ) -> Dict[str, Any]:
         """Build the final assessment result."""
         return {
@@ -489,12 +491,15 @@ class PronunciationAssessor:
         pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
         return self._build_assessment_result(pronunciation_result, result)
 
-    def _extract_word_details(self, result: speechsdk.SpeechRecognitionResult) -> List[Dict[str, Any]]:
+    def _extract_word_details(
+        self, result: speechsdk.SpeechRecognitionResult
+    ) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
         try:
             json_result = json.loads(
                 result.properties.get(  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
-                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}"  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
+                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult,
+                    "{}",  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
                 )  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
             )
 
