@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class ScenarioManager:
     """Manages training scenarios loaded from YAML files."""
 
-    def __init__(self, scenario_dir: Path = None):
+    def __init__(self, scenario_dir: Optional[Path] = None):
         """
         Initialize the scenario manager.
 
@@ -44,7 +44,7 @@ class ScenarioManager:
         self.scenario_dir = self._determine_scenario_directory(scenario_dir)
         self.scenarios = self._load_scenarios()
         self.graph_generator = GraphScenarioGenerator()
-        self.generated_scenarios = {}
+        self.generated_scenarios: Dict[str, Any] = {}
 
     def _determine_scenario_directory(self, scenario_dir: Optional[Path]) -> Path:
         """Determine the correct scenario directory path."""
@@ -64,7 +64,7 @@ class ScenarioManager:
         Returns:
             Dict[str, Any]: Dictionary of scenarios keyed by ID
         """
-        scenarios = {}
+        scenarios: Dict[str, Any] = {}
 
         if not self.scenario_dir.exists():
             logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
@@ -109,14 +109,14 @@ class ScenarioManager:
 
         return self.generated_scenarios.get(scenario_id)
 
-    def list_scenarios(self) -> List[Dict[str, str]]:
+    def list_scenarios(self) -> List[Dict[str, str | bool]]:
         """
         List all available scenarios.
 
         Returns:
             List[Dict[str, str]]: List of scenario summaries
         """
-        scenarios = [
+        scenarios: List[Dict[str, str | bool]] = [
             {
                 "id": scenario_id,
                 "name": scenario_data.get("name", "Unknown"),
@@ -174,7 +174,7 @@ CRITICAL INTERACTION GUIDELINES:
 
     def __init__(self):
         """Initialize the agent manager."""
-        self.agents = {}
+        self.agents: Dict[str, Dict[str, Any]] = {}
         self.credential = DefaultAzureCredential()
         self.use_azure_ai_agents = config["use_azure_ai_agents"]
         self.project_client = self._initialize_project_client()
@@ -223,6 +223,7 @@ CRITICAL INTERACTION GUIDELINES:
         Raises:
             Exception: If agent creation fails
         """
+
         scenario_instructions = scenario_data.get("messages", [{}])[0].get(
             "content", ""
         )
@@ -250,10 +251,16 @@ CRITICAL INTERACTION GUIDELINES:
         max_tokens: int,
     ) -> str:
         """Create an agent using Azure AI Agent Service."""
+
+        if not self.project_client:
+            logger.warning("Project client not available, using fallback scenario")
+            return ""
+        project_client = self.project_client
+
         try:
-            with self.project_client:
+            with project_client:
                 agent_name = self._generate_agent_name(scenario_id)
-                agent = self.project_client.agents.create_agent(
+                agent = project_client.agents.create_agent(
                     model=model,
                     name=agent_name,
                     instructions=instructions,
@@ -330,7 +337,7 @@ CRITICAL INTERACTION GUIDELINES:
         max_tokens: int,
     ) -> Dict[str, Any]:
         """Create standardized agent configuration."""
-        config = {
+        config: Dict[str, Any] = {
             "scenario_id": scenario_id,
             "is_azure_agent": is_azure_agent,
             "instructions": instructions,

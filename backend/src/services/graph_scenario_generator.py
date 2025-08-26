@@ -33,7 +33,7 @@ class GraphScenarioGenerator:
                 return None
 
             return AzureOpenAI(
-                api_version="2024-12-01-preview",
+                api_version=config["api_version"],
                 azure_endpoint=endpoint,
                 api_key=api_key,
             )
@@ -53,7 +53,7 @@ class GraphScenarioGenerator:
         Returns:
             Dict[str, Any]: Generated scenario
         """
-        meetings = []
+        meetings: List[Dict[str, Any]] = []
         if "value" in graph_data:
             for event in graph_data["value"][:3]:
                 subject = event.get("subject", "Meeting")
@@ -74,7 +74,7 @@ class GraphScenarioGenerator:
             "name": "Your Personalized Sales Scenario",
             "description": first_sentence,
             "messages": [{"content": scenario_content}],
-            "model": "gpt-4o",
+            "model": config["model_deployment_name"],
             "modelParameters": {"temperature": 0.7, "max_tokens": 2000},
             "generated_from_graph": True,
         }
@@ -98,7 +98,7 @@ class GraphScenarioGenerator:
         prompt = self._build_scenario_generation_prompt(meetings)
 
         response = self.openai_client.chat.completions.create(
-            model="gpt-4o",
+            model=config["model_deployment_name"],
             messages=[
                 {
                     "role": "system",
@@ -110,7 +110,8 @@ class GraphScenarioGenerator:
             max_tokens=1500,
         )
 
-        generated_content = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        generated_content = content.strip() if content is not None else ""
         return generated_content
 
     def _build_scenario_generation_prompt(self, meetings: List[Dict[str, Any]]) -> str:

@@ -14,7 +14,7 @@ import wave
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-import azure.cognitiveservices.speech as speechsdk
+import azure.cognitiveservices.speech as speechsdk # pyright: ignore[reportMissingTypeStubs]
 import yaml
 from openai import AzureOpenAI
 
@@ -46,10 +46,6 @@ AUDIO_CHANNELS = 1
 AUDIO_SAMPLE_WIDTH = 2
 AUDIO_BITS_PER_SAMPLE = 16
 
-# Model constants
-GPT_MODEL_NAME = "gpt-4o"
-SPEECH_LANGUAGE = "en-US"
-
 # Assessment constants
 MAX_STRENGTHS_COUNT = 3
 MAX_IMPROVEMENTS_COUNT = 3
@@ -58,7 +54,7 @@ MAX_IMPROVEMENTS_COUNT = 3
 class ConversationAnalyzer:
     """Analyzes sales conversations using Azure OpenAI."""
 
-    def __init__(self, scenario_dir: Path = None):
+    def __init__(self, scenario_dir: Optional[Path] = None):
         """
         Initialize the conversation analyzer.
 
@@ -87,7 +83,7 @@ class ConversationAnalyzer:
         Returns:
             Dict[str, Any]: Dictionary of evaluation scenarios keyed by ID
         """
-        scenarios = {}
+        scenarios: Dict[str, Any] = {}
 
         if not self.scenario_dir.exists():
             logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
@@ -122,7 +118,7 @@ class ConversationAnalyzer:
                 return None
 
             client = AzureOpenAI(
-                api_version="2024-12-01-preview",
+                api_version=config["api_version"],
                 azure_endpoint=endpoint,
                 api_key=api_key,
             )
@@ -141,17 +137,14 @@ class ConversationAnalyzer:
         Analyze a conversation transcript.
 
         Args:
-            scenario_id: The scenario identifier
+            scenario_id: The scenario identifier.
+                         For AI generated scenario, use "graph_generated"
             transcript: The conversation transcript to analyze
 
         Returns:
             Optional[Dict[str, Any]]: Analysis results or None if analysis fails
         """
         logger.info(f"Starting conversation analysis for scenario: {scenario_id}")
-
-        # Handle generated scenarios
-        if scenario_id == "graph-generated":
-            scenario_id = "graph-generated"
 
         evaluation_scenario = self.evaluation_scenarios.get(scenario_id)
         if not evaluation_scenario:
@@ -207,15 +200,21 @@ class ConversationAnalyzer:
         Returns:
             Optional[Dict[str, Any]]: Evaluation results or None if call fails
         """
+
+        if not self.openai_client:
+            logger.error("OpenAI client not configured")
+            return None
+        openai_client = self.openai_client
+
         try:
             evaluation_prompt = self._build_evaluation_prompt(scenario, transcript)
 
             completion = await asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: self.openai_client.chat.completions.create(
-                    model=GPT_MODEL_NAME,
-                    messages=self._build_evaluation_messages(evaluation_prompt),
-                    response_format=self._get_response_format(),
+                lambda: openai_client.chat.completions.create(
+                    model=config["model_deployment_name"],
+                    messages=self._build_evaluation_messages(evaluation_prompt),  # pyright: ignore[reportArgumentType]
+                    response_format=self._get_response_format(),  # pyright: ignore[reportArgumentType]
                 ),
             )
 
@@ -345,16 +344,15 @@ class PronunciationAssessor:
 
     def _create_wav_audio(self, audio_bytes: bytearray) -> bytes:
         """Create WAV format audio from raw PCM bytes."""
-        wav_buffer = io.BytesIO()
+        with io.BytesIO() as wav_buffer:
+            with wave.open(wav_buffer, "wb") as wav_file:
+                wav_file.setnchannels(AUDIO_CHANNELS)
+                wav_file.setsampwidth(AUDIO_SAMPLE_WIDTH)
+                wav_file.setframerate(AUDIO_SAMPLE_RATE)
+                wav_file.writeframes(audio_bytes)
 
-        with wave.open(wav_buffer, "wb") as wav_file:
-            wav_file.setnchannels(AUDIO_CHANNELS)
-            wav_file.setsampwidth(AUDIO_SAMPLE_WIDTH)
-            wav_file.setframerate(AUDIO_SAMPLE_RATE)
-            wav_file.writeframes(audio_bytes)
-
-        wav_buffer.seek(0)
-        return wav_buffer.read()
+            wav_buffer.seek(0)
+            return wav_buffer.read()
 
     def _log_assessment_info(
         self, wav_audio: bytes, reference_text: Optional[str]
@@ -372,7 +370,7 @@ class PronunciationAssessor:
         speech_config = speechsdk.SpeechConfig(
             subscription=self.speech_key, region=self.speech_region
         )
-        speech_config.speech_recognition_language = SPEECH_LANGUAGE
+        speech_config.speech_recognition_language = config["azure_speech_language"]
         return speech_config
 
     def _create_pronunciation_config(
@@ -404,7 +402,9 @@ class PronunciationAssessor:
         return speechsdk.audio.AudioConfig(stream=push_stream)
 
     def _build_assessment_result(
-        self, pronunciation_result: speechsdk.PronunciationAssessmentResult, result
+        self,
+        pronunciation_result: speechsdk.PronunciationAssessmentResult,
+        result: speechsdk.SpeechRecognitionResult
     ) -> Dict[str, Any]:
         """Build the final assessment result."""
         return {
@@ -478,7 +478,7 @@ class PronunciationAssessor:
         speech_recognizer = speechsdk.SpeechRecognizer(
             speech_config=speech_config,
             audio_config=audio_config,
-            language=SPEECH_LANGUAGE,
+            language=config["azure_speech_language"],
         )
         pronunciation_config.apply_to(speech_recognizer)
 
@@ -489,16 +489,16 @@ class PronunciationAssessor:
         pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
         return self._build_assessment_result(pronunciation_result, result)
 
-    def _extract_word_details(self, result) -> List[Dict[str, Any]]:
+    def _extract_word_details(self, result: speechsdk.SpeechRecognitionResult) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
         try:
             json_result = json.loads(
-                result.properties.get(
-                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}"
-                )
+                result.properties.get( # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
+                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}" # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
+                ) # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
             )
 
-            words = []
+            words: List[Dict[str, Any]] = []
             if "NBest" in json_result and json_result["NBest"]:
                 for word_info in json_result["NBest"][0].get("Words", []):
                     words.append(

@@ -14,7 +14,10 @@
                 "ms-python.python",
                 "ms-toolsai.jupyter",
                 "GitHub.vscode-github-actions"
-            ]
+            ],
+            "settings": {
+                "python.analysis.typeCheckingMode": "strict"
+            }
         }
     },
     "remoteUser": "vscode"
