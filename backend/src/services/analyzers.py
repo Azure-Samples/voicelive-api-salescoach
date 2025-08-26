@@ -14,7 +14,7 @@ import wave
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-import azure.cognitiveservices.speech as speechsdk # pyright: ignore[reportMissingTypeStubs]
+import azure.cognitiveservices.speech as speechsdk  # pyright: ignore[reportMissingTypeStubs]
 import yaml
 from openai import AzureOpenAI
 
@@ -493,9 +493,9 @@ class PronunciationAssessor:
         """Extract word-level pronunciation details."""
         try:
             json_result = json.loads(
-                result.properties.get( # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
-                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}" # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
-                ) # pyright: ignore[reportUnknownMemberType] # pyright: ignore[reportUnknownArgumentType]
+                result.properties.get(  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
+                    speechsdk.PropertyId.SpeechServiceResponse_JsonResult, "{}"  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
+                )  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
             )
 
             words: List[Dict[str, Any]] = []
