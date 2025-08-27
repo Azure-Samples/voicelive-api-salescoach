@@ -70,7 +70,9 @@ class VoiceProxyHandler:
 
             azure_ws = await self._connect_to_azure(current_agent_id)
             if not azure_ws:
-                await self._send_error(client_ws, "Failed to connect to Azure Voice API")
+                await self._send_error(
+                    client_ws, "Failed to connect to Azure Voice API"
+                )
                 return
 
             await self._send_message(
@@ -88,12 +90,15 @@ class VoiceProxyHandler:
             if azure_ws:
                 await azure_ws.close()
 
-    async def _get_agent_id_from_client(self, client_ws: simple_websocket.ws.Server) -> Optional[str]:
+    async def _get_agent_id_from_client(
+        self, client_ws: simple_websocket.ws.Server
+    ) -> Optional[str]:
         """Get agent ID from initial client message."""
 
         try:
             first_message: str | None = await asyncio.get_event_loop().run_in_executor(
-                None, client_ws.receive  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+                None,
+                client_ws.receive,  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
             )
             if first_message:
                 msg = json.loads(first_message)
@@ -160,10 +165,7 @@ class VoiceProxyHandler:
         )
 
     def _build_agent_specific_url(
-        self,
-        base_url: str,
-        agent_id: Optional[str],
-        agent_config: Dict[str, Any]
+        self, base_url: str, agent_id: Optional[str], agent_config: Dict[str, Any]
     ) -> str:
         """Build URL for specific agent configuration."""
         if agent_config.get("is_azure_agent"):
@@ -175,7 +177,7 @@ class VoiceProxyHandler:
     async def _send_initial_config(
         self,
         azure_ws: websockets.asyncio.client.ClientConnection,
-        agent_config: Optional[Dict[str, Any]]
+        agent_config: Optional[Dict[str, Any]],
     ) -> None:
         """Send initial configuration to Azure."""
         config_message = self._build_session_config()
@@ -204,9 +206,7 @@ class VoiceProxyHandler:
         }
 
     def _add_local_agent_config(
-        self,
-        config_message: Dict[str, Any],
-        agent_config: Dict[str, Any]
+        self, config_message: Dict[str, Any], agent_config: Dict[str, Any]
     ) -> None:
         """Add local agent configuration to session config."""
         session = config_message["session"]
@@ -216,10 +216,10 @@ class VoiceProxyHandler:
         session["max_response_output_tokens"] = agent_config["max_tokens"]
 
     async def _handle_message_forwarding(
-            self,
-            client_ws: simple_websocket.ws.Server,
-            azure_ws: websockets.asyncio.client.ClientConnection) -> None:
-
+        self,
+        client_ws: simple_websocket.ws.Server,
+        azure_ws: websockets.asyncio.client.ClientConnection,
+    ) -> None:
         """Handle bidirectional message forwarding."""
         tasks = [
             asyncio.create_task(self._forward_client_to_azure(client_ws, azure_ws)),
@@ -232,15 +232,16 @@ class VoiceProxyHandler:
             task.cancel()
 
     async def _forward_client_to_azure(
-            self,
-            client_ws: simple_websocket.ws.Server,
-            azure_ws: websockets.asyncio.client.ClientConnection) -> None:
-
+        self,
+        client_ws: simple_websocket.ws.Server,
+        azure_ws: websockets.asyncio.client.ClientConnection,
+    ) -> None:
         """Forward messages from client to Azure."""
         try:
             while True:
                 message: Optional[Any] = await asyncio.get_event_loop().run_in_executor(
-                    None, client_ws.receive  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+                    None,
+                    client_ws.receive,  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
                 )
                 if message is None:
                     break
@@ -250,34 +251,38 @@ class VoiceProxyHandler:
             logger.debug("Client connection closed during forwarding")
 
     async def _forward_azure_to_client(
-            self,
-            azure_ws: websockets.asyncio.client.ClientConnection,
-            client_ws: simple_websocket.ws.Server) -> None:
-
+        self,
+        azure_ws: websockets.asyncio.client.ClientConnection,
+        client_ws: simple_websocket.ws.Server,
+    ) -> None:
         """Forward messages from Azure to client."""
         try:
             async for message in azure_ws:
                 logger.debug(f"Azure->Client: {message[:LOG_MESSAGE_MAX_LENGTH]}")
                 await asyncio.get_event_loop().run_in_executor(
-                    None, client_ws.send, message  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+                    None,
+                    client_ws.send,  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+                    message,
                 )
         except Exception:
             logger.debug("Client connection closed during forwarding")
 
     async def _send_message(
-            self,
-            ws: simple_websocket.ws.Server,
-            message: Dict[str, str | Dict[str, str]]) -> None:
-
+        self, ws: simple_websocket.ws.Server, message: Dict[str, str | Dict[str, str]]
+    ) -> None:
         """Send a JSON message to a WebSocket."""
         try:
             await asyncio.get_event_loop().run_in_executor(
-                None, ws.send, json.dumps(message)  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+                None,
+                ws.send,  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+                json.dumps(message),
             )
         except Exception:
             pass
 
-    async def _send_error(self, ws: simple_websocket.ws.Server, error_message: str) -> None:
+    async def _send_error(
+        self, ws: simple_websocket.ws.Server, error_message: str
+    ) -> None:
         """Send an error message to a WebSocket."""
 
         await self._send_message(
