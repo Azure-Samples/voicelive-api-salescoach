@@ -2,9 +2,7 @@
 
 import pytest
 import json
-from unittest.mock import Mock, patch, MagicMock
-import tempfile
-from pathlib import Path
+from unittest.mock import patch
 
 from app import app
 
@@ -21,9 +19,9 @@ class TestFlaskApp:
         """Test the index route serves index.html."""
         with patch("app.send_from_directory") as mock_send:
             mock_send.return_value = "index.html content"
-            
+
             response = self.client.get("/")
-            
+
             assert response.status_code == 200
             mock_send.assert_called_once_with(app.static_folder, "index.html")
 
@@ -31,17 +29,17 @@ class TestFlaskApp:
         """Test index route behavior when static folder is None."""
         original_static_folder = app.static_folder
         app.static_folder = None
-        
+
         with pytest.raises(SystemExit):
             self.client.get("/")
-        
+
         # Restore original static folder
         app.static_folder = original_static_folder
 
     def test_get_config_route(self):
         """Test the /api/config endpoint."""
         response = self.client.get("/api/config")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["proxy_enabled"] is True
@@ -55,9 +53,9 @@ class TestFlaskApp:
             {"id": "scenario2", "name": "Test Scenario 2"},
         ]
         mock_scenario_manager.list_scenarios.return_value = mock_scenarios
-        
+
         response = self.client.get("/api/scenarios")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data == mock_scenarios
@@ -68,9 +66,9 @@ class TestFlaskApp:
         """Test getting an existing scenario by ID."""
         mock_scenario = {"id": "test-scenario", "name": "Test Scenario"}
         mock_scenario_manager.get_scenario.return_value = mock_scenario
-        
+
         response = self.client.get("/api/scenarios/test-scenario")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data == mock_scenario
@@ -80,9 +78,9 @@ class TestFlaskApp:
     def test_get_scenario_not_found(self, mock_scenario_manager):
         """Test getting a non-existent scenario."""
         mock_scenario_manager.get_scenario.return_value = None
-        
+
         response = self.client.get("/api/scenarios/nonexistent")
-        
+
         assert response.status_code == 404
         data = json.loads(response.data)
         assert data["error"] == "Scenario not found"
@@ -94,25 +92,27 @@ class TestFlaskApp:
         mock_scenario = {"id": "test-scenario", "name": "Test Scenario"}
         mock_scenario_manager.get_scenario.return_value = mock_scenario
         mock_agent_manager.create_agent.return_value = "agent-123"
-        
+
         response = self.client.post(
             "/api/agents/create",
-            json={"scenario_id": "test-scenario"}
+            json={"scenario_id": "test-scenario"},
         )
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["agent_id"] == "agent-123"
         assert data["scenario_id"] == "test-scenario"
-        mock_agent_manager.create_agent.assert_called_once_with("test-scenario", mock_scenario)
+        mock_agent_manager.create_agent.assert_called_once_with(
+            "test-scenario", mock_scenario
+        )
 
     def test_create_agent_missing_scenario_id(self):
         """Test agent creation without scenario_id."""
         response = self.client.post(
             "/api/agents/create",
-            json={}
+            json={},
         )
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert data["error"] == "scenario_id is required"
@@ -123,12 +123,12 @@ class TestFlaskApp:
         mock_scenario_manager.get_scenario.return_value = None
         mock_scenario_manager.scenarios = {}
         mock_scenario_manager.generated_scenarios = {}
-        
+
         response = self.client.post(
             "/api/agents/create",
-            json={"scenario_id": "nonexistent"}
+            json={"scenario_id": "nonexistent"},
         )
-        
+
         assert response.status_code == 404
         data = json.loads(response.data)
         assert data["error"] == "Scenario not found"
@@ -140,12 +140,12 @@ class TestFlaskApp:
         mock_scenario = {"id": "test-scenario", "name": "Test Scenario"}
         mock_scenario_manager.get_scenario.return_value = mock_scenario
         mock_agent_manager.create_agent.side_effect = Exception("Creation failed")
-        
+
         response = self.client.post(
             "/api/agents/create",
-            json={"scenario_id": "test-scenario"}
+            json={"scenario_id": "test-scenario"},
         )
-        
+
         assert response.status_code == 500
         data = json.loads(response.data)
         assert data["error"] == "Creation failed"
@@ -154,9 +154,9 @@ class TestFlaskApp:
     def test_delete_agent_success(self, mock_agent_manager):
         """Test successful agent deletion."""
         mock_agent_manager.delete_agent.return_value = None
-        
+
         response = self.client.delete("/api/agents/agent-123")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["success"] is True
@@ -166,9 +166,9 @@ class TestFlaskApp:
     def test_delete_agent_exception(self, mock_agent_manager):
         """Test agent deletion with exception."""
         mock_agent_manager.delete_agent.side_effect = Exception("Deletion failed")
-        
+
         response = self.client.delete("/api/agents/agent-123")
-        
+
         assert response.status_code == 500
         data = json.loads(response.data)
         assert data["error"] == "Deletion failed"
@@ -182,10 +182,10 @@ class TestFlaskApp:
             json={
                 "scenario_id": "test-scenario",
                 "transcript": "Hello, how are you?",
-                "reference_text": "Hello, how are you?"
-            }
+                "reference_text": "Hello, how are you?",
+            },
         )
-        
+
         # The response might be 200 or 500 depending on analysis function
         # but it should not be 400 (bad request) since we provided required fields
         assert response.status_code != 400
@@ -195,19 +195,19 @@ class TestFlaskApp:
         # Missing scenario_id
         response = self.client.post(
             "/api/analyze",
-            json={"transcript": "Hello"}
+            json={"transcript": "Hello"},
         )
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert data["error"] == "scenario_id and transcript are required"
-        
+
         # Missing transcript
         response = self.client.post(
             "/api/analyze",
-            json={"scenario_id": "test"}
+            json={"scenario_id": "test"},
         )
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert data["error"] == "scenario_id and transcript are required"
@@ -216,9 +216,9 @@ class TestFlaskApp:
         """Test the audio processor route."""
         with patch("app.send_from_directory") as mock_send:
             mock_send.return_value = "audio-processor.js content"
-            
+
             response = self.client.get("/audio-processor.js")
-            
+
             assert response.status_code == 200
             mock_send.assert_called_once_with("static", "audio-processor.js")
 
@@ -226,18 +226,20 @@ class TestFlaskApp:
         """Test the _perform_conversation_analysis function exists and can be imported."""
         # This is a complex async function, so we just test it can be imported
         from app import _perform_conversation_analysis
+
         assert callable(_perform_conversation_analysis)
 
     def test_perform_conversation_analysis_with_exceptions(self):
         """Test _perform_conversation_analysis function exists."""
         # This is a complex async function, so we just test it can be imported
         from app import _perform_conversation_analysis
+
         assert callable(_perform_conversation_analysis)
 
     def test_log_analyze_request(self):
         """Test the _log_analyze_request function."""
         from app import _log_analyze_request
-        
+
         # Test with valid input
         with patch("app.logger") as mock_logger:
             _log_analyze_request("test-scenario", "Hello world", "Hello world")
@@ -246,7 +248,7 @@ class TestFlaskApp:
             assert "test-scenario" in call_args
             assert "transcript length: 11" in call_args
             assert "reference_text length: 11" in call_args
-        
+
         # Test with None values
         with patch("app.logger") as mock_logger:
             _log_analyze_request("test-scenario", None, None)

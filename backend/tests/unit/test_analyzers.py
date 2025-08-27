@@ -130,10 +130,10 @@ class TestConversationAnalyzer:
     def test_build_evaluation_messages(self):
         """Test building evaluation messages for API call."""
         analyzer = ConversationAnalyzer()
-        
+
         prompt = "Test evaluation prompt"
         messages = analyzer._build_evaluation_messages(prompt)
-        
+
         assert len(messages) == 2
         assert messages[0]["role"] == "system"
         assert messages[1]["role"] == "user"
@@ -143,42 +143,42 @@ class TestConversationAnalyzer:
     def test_analyze_conversation_with_openai_client(self):
         """Test analyzing conversation with mocked OpenAI client."""
         analyzer = ConversationAnalyzer()
-        
+
         # Mock OpenAI client and configuration
         with patch("services.analyzers.config") as mock_config:
             mock_config.__getitem__.side_effect = lambda key: {
                 "azure_openai_endpoint": "https://test.openai.azure.com",
                 "azure_openai_api_key": "test-key",
                 "api_version": "2024-02-01",
-                "model_deployment_name": "gpt-4"
+                "model_deployment_name": "gpt-4",
             }.get(key, "test-value")
 
             mock_client = Mock()
             mock_response = Mock()
             mock_response.choices = [Mock()]
-            mock_response.choices[0].message.content = json.dumps({
-                "professional_tone": 8,
-                "active_listening": 7,
-                "engagement_quality": 9,
-                "needs_assessment": 20,
-                "value_proposition": 22,
-                "objection_handling": 18,
-                "strengths": ["Good rapport"],
-                "improvements": ["Ask more questions"],
-            })
+            mock_response.choices[0].message.content = json.dumps(
+                {
+                    "professional_tone": 8,
+                    "active_listening": 7,
+                    "engagement_quality": 9,
+                    "needs_assessment": 20,
+                    "value_proposition": 22,
+                    "objection_handling": 18,
+                    "strengths": ["Good rapport"],
+                    "improvements": ["Ask more questions"],
+                }
+            )
             mock_client.chat.completions.create.return_value = mock_response
-            
+
             # Recreate analyzer with proper config
             analyzer = ConversationAnalyzer()
             analyzer.openai_client = mock_client
-            
+
             # Mock scenario
             analyzer.evaluation_scenarios = {
-                "test-scenario": {
-                    "messages": [{"content": "Test scenario content"}]
-                }
+                "test-scenario": {"messages": [{"content": "Test scenario content"}]}
             }
-            
+
             # Test that the method exists and can be called
             # Due to complexity of async mocking, we just verify the client is set
             assert analyzer.openai_client is not None
@@ -335,32 +335,28 @@ class TestPronunciationAssessor:
     def test_assess_pronunciation_with_valid_audio(self):
         """Test pronunciation assessment with valid audio data setup."""
         assessor = PronunciationAssessor()
-        
+
         # Mock the speech services
         assessor.speech_key = "test-key"
         assessor.speech_region = "test-region"
-        
-        audio_data = [
-            {"chunk": base64.b64encode(b"fake audio data").decode(), "user": True}
-        ]
-        
+
         # Test that the method exists and can handle basic setup
-        assert hasattr(assessor, 'assess_pronunciation')
+        assert hasattr(assessor, "assess_pronunciation")
         assert callable(assessor.assess_pronunciation)
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_prepare_audio_data_mixed_speakers(self):
         """Test preparing audio data with mixed user and assistant chunks."""
         assessor = PronunciationAssessor()
-        
+
         audio_data = [
             {"chunk": base64.b64encode(b"user audio").decode(), "user": True},
             {"chunk": base64.b64encode(b"assistant audio").decode(), "user": False},
             {"chunk": base64.b64encode(b"more user audio").decode(), "user": True},
         ]
-        
+
         result = await assessor._prepare_audio_data(audio_data)
-        
+
         # Should include some audio data (user chunks are processed)
         assert isinstance(result, (bytes, bytearray))
         # The actual filtering logic depends on implementation details

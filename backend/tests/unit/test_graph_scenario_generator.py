@@ -1,9 +1,6 @@
 """Tests for the graph_scenario_generator module."""
 
-import pytest
 from unittest.mock import Mock, patch
-from openai.types.chat import ChatCompletion, ChatCompletionMessage
-from openai.types.chat.chat_completion import Choice
 
 from services.graph_scenario_generator import GraphScenarioGenerator
 
@@ -104,13 +101,15 @@ class TestGraphScenarioGenerator:
         generator = GraphScenarioGenerator()
         meetings = [
             {"subject": "Team Standup", "attendees": ["Alice", "Bob"]},
-            {"subject": "Client Call", "attendees": ["Charlie", "Diana", "Eve", "Frank"]},
+            {
+                "subject": "Client Call",
+                "attendees": ["Charlie", "Diana", "Eve", "Frank"],
+            },
         ]
 
         result = generator._format_meeting_list(meetings)
         expected = (
-            "- Team Standup with Alice, Bob\n"
-            "- Client Call with Charlie, Diana, Eve"
+            "- Team Standup with Alice, Bob\n" "- Client Call with Charlie, Diana, Eve"
         )
         assert result == expected
 
@@ -118,7 +117,7 @@ class TestGraphScenarioGenerator:
         """Test scenario content creation with no meetings."""
         generator = GraphScenarioGenerator()
         result = generator._create_graph_scenario_content([])
-        
+
         # Should return fallback content
         assert "Jordan Martinez" in result
         assert "TechCorp Solutions" in result
@@ -127,10 +126,10 @@ class TestGraphScenarioGenerator:
         """Test scenario content creation with no OpenAI client."""
         generator = GraphScenarioGenerator()
         generator.openai_client = None
-        
+
         meetings = [{"subject": "Test Meeting", "attendees": ["John"]}]
         result = generator._create_graph_scenario_content(meetings)
-        
+
         # Should return fallback content
         assert "Jordan Martinez" in result
         assert "TechCorp Solutions" in result
@@ -217,13 +216,16 @@ class TestGraphScenarioGenerator:
             # Create a long scenario content that will be truncated
             generator = GraphScenarioGenerator()
             generator.openai_client = None  # Force use of fallback
-            
+
             # Patch the fallback method to return long content
-            long_content = "This is a very long scenario description that should be truncated because it exceeds the 100 character limit set in the code. " * 3
+            long_content = (
+                "This is a very long scenario description that should be truncated because it exceeds the 100 character limit set in the code. "
+                * 3
+            )
             generator._get_fallback_scenario_content = lambda: long_content
 
             result = generator.generate_scenario_from_graph({})
-            
+
             # Description should be truncated to 100 characters + "..."
             assert len(result["description"]) <= 103
             assert result["description"].endswith("...")
@@ -243,20 +245,22 @@ class TestGraphScenarioGenerator:
             }
 
             generator = GraphScenarioGenerator()
-            
+
             # Test the generate_scenario_from_graph method which processes meetings
             # We can test this by mocking the _create_graph_scenario_content method
-            with patch.object(generator, '_create_graph_scenario_content') as mock_create:
+            with patch.object(
+                generator, "_create_graph_scenario_content"
+            ) as mock_create:
                 mock_create.return_value = "Test scenario content"
-                
-                result = generator.generate_scenario_from_graph(graph_data)
-                
+
+                generator.generate_scenario_from_graph(graph_data)
+
                 # Verify the method was called with limited meetings
                 assert mock_create.called
                 called_meetings = mock_create.call_args[0][0]
                 assert len(called_meetings) == 3
                 assert called_meetings[0]["subject"] == "Meeting 0"
-                assert called_meetings[1]["subject"] == "Meeting 1"  
+                assert called_meetings[1]["subject"] == "Meeting 1"
                 assert called_meetings[2]["subject"] == "Meeting 2"
 
     def test_generate_scenario_attendees_limit(self):
@@ -279,17 +283,23 @@ class TestGraphScenarioGenerator:
             }
 
             generator = GraphScenarioGenerator()
-            
+
             # Test by mocking the _create_graph_scenario_content method
-            with patch.object(generator, '_create_graph_scenario_content') as mock_create:
+            with patch.object(
+                generator, "_create_graph_scenario_content"
+            ) as mock_create:
                 mock_create.return_value = "Test scenario content"
-                
-                result = generator.generate_scenario_from_graph(graph_data)
-                
+
+                generator.generate_scenario_from_graph(graph_data)
+
                 # Verify the method was called with limited attendees
                 assert mock_create.called
                 called_meetings = mock_create.call_args[0][0]
                 assert len(called_meetings) == 1
                 # Should only have first 3 attendees
                 assert len(called_meetings[0]["attendees"]) == 3
-                assert called_meetings[0]["attendees"] == ["Person 0", "Person 1", "Person 2"]
+                assert called_meetings[0]["attendees"] == [
+                    "Person 0",
+                    "Person 1",
+                    "Person 2",
+                ]
