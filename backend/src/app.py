@@ -64,6 +64,7 @@ def index():
     if app.static_folder is None:
         logger.error("STATIC_FOLDER is not set. Cannot serve index.html.")
         import sys
+
         sys.exit(1)
     return send_from_directory(app.static_folder, INDEX_FILE)
 
@@ -152,7 +153,12 @@ def _log_analyze_request(scenario_id: str, transcript: str, reference_text: str)
     )
 
 
-def _perform_conversation_analysis(scenario_id: str, transcript: str, audio_data: List[Dict[str, Any]], reference_text: str):
+def _perform_conversation_analysis(
+    scenario_id: str,
+    transcript: str,
+    audio_data: List[Dict[str, Any]],
+    reference_text: str,
+):
     """Perform the actual conversation analysis."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
