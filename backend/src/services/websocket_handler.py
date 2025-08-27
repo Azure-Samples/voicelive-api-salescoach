@@ -9,9 +9,11 @@ import asyncio
 import json
 import logging
 import uuid
-from typing import Optional
+from typing import Any, Dict, Optional
 
+import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 import websockets
+import websockets.asyncio.client
 
 from config import config
 from services.managers import AgentManager
@@ -52,13 +54,14 @@ class VoiceProxyHandler:
         """
         self.agent_manager = agent_manager
 
-    async def handle_connection(self, client_ws) -> None:
+    async def handle_connection(self, client_ws: simple_websocket.ws.Server) -> None:
         """
         Handle a WebSocket connection from a client.
 
         Args:
             client_ws: The client WebSocket connection
         """
+
         azure_ws = None
         current_agent_id = None
 
@@ -66,11 +69,8 @@ class VoiceProxyHandler:
             current_agent_id = await self._get_agent_id_from_client(client_ws)
 
             azure_ws = await self._connect_to_azure(current_agent_id)
-
             if not azure_ws:
-                await self._send_error(
-                    client_ws, "Failed to connect to Azure Voice API"
-                )
+                await self._send_error(client_ws, "Failed to connect to Azure Voice API")
                 return
 
             await self._send_message(
@@ -88,11 +88,12 @@ class VoiceProxyHandler:
             if azure_ws:
                 await azure_ws.close()
 
-    async def _get_agent_id_from_client(self, client_ws) -> Optional[str]:
+    async def _get_agent_id_from_client(self, client_ws: simple_websocket.ws.Server) -> Optional[str]:
         """Get agent ID from initial client message."""
+
         try:
-            first_message = await asyncio.get_event_loop().run_in_executor(
-                None, client_ws.receive
+            first_message: str | None = await asyncio.get_event_loop().run_in_executor(
+                None, client_ws.receive  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
             )
             if first_message:
                 msg = json.loads(first_message)
@@ -100,11 +101,11 @@ class VoiceProxyHandler:
                     return msg.get("session", {}).get("agent_id")
         except Exception as e:
             logger.error(f"Error getting agent ID: {e}")
-        return None
+            return None
 
     async def _connect_to_azure(
         self, agent_id: Optional[str]
-    ) -> Optional[websockets.WebSocketClientProtocol]:
+    ) -> Optional[websockets.asyncio.client.ClientConnection]:
         """Connect to Azure Voice API with appropriate configuration."""
         try:
             agent_config = self.agent_manager.get_agent(agent_id) if agent_id else None
@@ -132,7 +133,7 @@ class VoiceProxyHandler:
             return None
 
     def _build_azure_url(
-        self, agent_id: Optional[str], agent_config: Optional[dict]
+        self, agent_id: Optional[str], agent_config: Optional[Dict[str, Any]]
     ) -> str:
         """Build the Azure WebSocket URL."""
         base_url = self._build_base_azure_url()
@@ -159,7 +160,10 @@ class VoiceProxyHandler:
         )
 
     def _build_agent_specific_url(
-        self, base_url: str, agent_id: Optional[str], agent_config: dict
+        self,
+        base_url: str,
+        agent_id: Optional[str],
+        agent_config: Dict[str, Any]
     ) -> str:
         """Build URL for specific agent configuration."""
         if agent_config.get("is_azure_agent"):
@@ -169,7 +173,9 @@ class VoiceProxyHandler:
             return f"{base_url}&model={model_name}"
 
     async def _send_initial_config(
-        self, azure_ws, agent_config: Optional[dict]
+        self,
+        azure_ws: websockets.asyncio.client.ClientConnection,
+        agent_config: Optional[Dict[str, Any]]
     ) -> None:
         """Send initial configuration to Azure."""
         config_message = self._build_session_config()
@@ -179,7 +185,7 @@ class VoiceProxyHandler:
 
         await azure_ws.send(json.dumps(config_message))
 
-    def _build_session_config(self) -> dict:
+    def _build_session_config(self) -> Dict[str, Any]:
         """Build the base session configuration."""
         return {
             "type": SESSION_UPDATE_TYPE,
@@ -197,7 +203,11 @@ class VoiceProxyHandler:
             },
         }
 
-    def _add_local_agent_config(self, config_message: dict, agent_config: dict) -> None:
+    def _add_local_agent_config(
+        self,
+        config_message: Dict[str, Any],
+        agent_config: Dict[str, Any]
+    ) -> None:
         """Add local agent configuration to session config."""
         session = config_message["session"]
         session["model"] = agent_config.get("model", config["model_deployment_name"])
@@ -205,24 +215,32 @@ class VoiceProxyHandler:
         session["temperature"] = agent_config["temperature"]
         session["max_response_output_tokens"] = agent_config["max_tokens"]
 
-    async def _handle_message_forwarding(self, client_ws, azure_ws) -> None:
+    async def _handle_message_forwarding(
+        self,
+        client_ws: simple_websocket.ws.Server,
+        azure_ws: websockets.asyncio.client.ClientConnection) -> None:
+        
         """Handle bidirectional message forwarding."""
         tasks = [
             asyncio.create_task(self._forward_client_to_azure(client_ws, azure_ws)),
             asyncio.create_task(self._forward_azure_to_client(azure_ws, client_ws)),
         ]
 
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        _, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
         for task in pending:
             task.cancel()
 
-    async def _forward_client_to_azure(self, client_ws, azure_ws) -> None:
+    async def _forward_client_to_azure(
+        self,
+        client_ws: simple_websocket.ws.Server,
+        azure_ws: websockets.asyncio.client.ClientConnection) -> None:
+
         """Forward messages from client to Azure."""
         try:
             while True:
-                message = await asyncio.get_event_loop().run_in_executor(
-                    None, client_ws.receive
+                message: Optional[Any] = await asyncio.get_event_loop().run_in_executor(
+                    None, client_ws.receive  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
                 )
                 if message is None:
                     break
@@ -231,28 +249,37 @@ class VoiceProxyHandler:
         except Exception:
             logger.debug("Client connection closed during forwarding")
 
-    async def _forward_azure_to_client(self, azure_ws, client_ws) -> None:
+    async def _forward_azure_to_client(
+        self,
+        azure_ws: websockets.asyncio.client.ClientConnection,
+        client_ws: simple_websocket.ws.Server) -> None:
+
         """Forward messages from Azure to client."""
         try:
             async for message in azure_ws:
                 logger.debug(f"Azure->Client: {message[:LOG_MESSAGE_MAX_LENGTH]}")
                 await asyncio.get_event_loop().run_in_executor(
-                    None, client_ws.send, message
+                    None, client_ws.send, message  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
                 )
         except Exception:
             logger.debug("Client connection closed during forwarding")
 
-    async def _send_message(self, ws, message: dict) -> None:
+    async def _send_message(
+        self,
+        ws: simple_websocket.ws.Server,
+        message: Dict[str, str | Dict[str, str]]) -> None:
+
         """Send a JSON message to a WebSocket."""
         try:
             await asyncio.get_event_loop().run_in_executor(
-                None, ws.send, json.dumps(message)
+                None, ws.send, json.dumps(message)  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
             )
         except Exception:
             pass
 
-    async def _send_error(self, ws, error_message: str) -> None:
+    async def _send_error(self, ws: simple_websocket.ws.Server, error_message: str) -> None:
         """Send an error message to a WebSocket."""
+
         await self._send_message(
             ws, {"type": "error", "error": {"message": error_message}}
         )

@@ -497,9 +497,9 @@ class PronunciationAssessor:
         """Extract word-level pronunciation details."""
         try:
             json_result = json.loads(
-                result.properties.get(  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
+                result.properties.get(
                     speechsdk.PropertyId.SpeechServiceResponse_JsonResult,
-                    "{}",  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
+                    "{}",
                 )  # pyright: ignore[reportUnknownMemberType]  # pyright: ignore[reportUnknownArgumentType]
             )
 
