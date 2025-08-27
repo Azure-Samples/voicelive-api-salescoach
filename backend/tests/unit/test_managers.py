@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 import yaml
 
-from managers import ScenarioManager, AgentManager
+from services.managers import ScenarioManager, AgentManager
 
 
 class TestScenarioManager:
@@ -77,7 +77,7 @@ class TestAgentManager:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("managers.config") as mock_config:
+        with patch("services.managers.config") as mock_config:
             mock_config.__getitem__.side_effect = lambda key: {
                 "use_azure_ai_agents": False,
                 "project_endpoint": "",
@@ -88,10 +88,10 @@ class TestAgentManager:
                 "project_endpoint": "",
                 "model_deployment_name": "gpt-4o",
             }.get(key, default)
-            with patch("managers.DefaultAzureCredential"):
+            with patch("services.managers.DefaultAzureCredential"):
                 self.agent_manager = AgentManager()
 
-    @patch("managers.config")
+    @patch("services.managers.config")
     def test_create_agent_success_local(self, mock_config):
         """Test successful local agent creation."""
         # Configure for local agent creation (no Azure AI Agents)
@@ -116,9 +116,9 @@ class TestAgentManager:
         assert "Test instructions" in manager.agents[agent_id]["instructions"]
         assert manager.BASE_INSTRUCTIONS in manager.agents[agent_id]["instructions"]
 
-    @patch("managers.config")
-    @patch("managers.DefaultAzureCredential")
-    @patch("managers.AIProjectClient")
+    @patch("services.managers.config")
+    @patch("services.managers.DefaultAzureCredential")
+    @patch("services.managers.AIProjectClient")
     def test_create_agent_success_azure(
         self, mock_ai_client, mock_credential, mock_config
     ):
@@ -198,7 +198,7 @@ class TestAgentManager:
         manager.delete_agent("nonexistent")
         assert len(manager.agents) == 0
 
-    @patch("managers.config")
+    @patch("services.managers.config")
     def test_delete_agent_local(self, mock_config):
         """Test deleting a local agent."""
         mock_config.__getitem__.side_effect = lambda key: {
@@ -212,9 +212,9 @@ class TestAgentManager:
         manager.delete_agent("test-agent")
         assert "test-agent" not in manager.agents
 
-    @patch("managers.config")
-    @patch("managers.DefaultAzureCredential")
-    @patch("managers.AIProjectClient")
+    @patch("services.managers.config")
+    @patch("services.managers.DefaultAzureCredential")
+    @patch("services.managers.AIProjectClient")
     def test_delete_agent_azure(self, mock_ai_client, mock_credential, mock_config):
         """Test Azure agent deletion."""
         # Mock configuration

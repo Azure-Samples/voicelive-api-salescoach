@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 import base64
 
-from analyzers import ConversationAnalyzer, PronunciationAssessor
+from services.analyzers import ConversationAnalyzer, PronunciationAssessor
 
 
 class TestConversationAnalyzer:
@@ -40,7 +40,7 @@ class TestConversationAnalyzer:
             assert len(analyzer.evaluation_scenarios) == 1
             assert "test-scenario" in analyzer.evaluation_scenarios
 
-    @patch("analyzers.config")
+    @patch("services.analyzers.config")
     def test_initialize_openai_client_missing_config(self, mock_config):
         """Test OpenAI client initialization with missing config."""
         mock_config.__getitem__.side_effect = lambda key: {
@@ -51,8 +51,8 @@ class TestConversationAnalyzer:
         analyzer = ConversationAnalyzer()
         assert analyzer.openai_client is None
 
-    @patch("analyzers.AzureOpenAI")
-    @patch("analyzers.config")
+    @patch("services.analyzers.AzureOpenAI")
+    @patch("services.analyzers.config")
     def test_initialize_openai_client_success(self, mock_config, mock_azure_openai):
         """Test successful OpenAI client initialization."""
         mock_config.__getitem__.side_effect = lambda key: {
