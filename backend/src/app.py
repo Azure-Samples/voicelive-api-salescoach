@@ -8,8 +8,10 @@
 import asyncio
 import logging
 import os
+from typing import Any, Dict, List, cast
 from flask import Flask, jsonify, request, send_from_directory
-from flask_sock import Sock
+from flask_sock import Sock  # pyright: ignore[reportMissingTypeStubs]
+import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 
 from config import config
 from services.managers import ScenarioManager, AgentManager
@@ -59,6 +61,10 @@ voice_proxy_handler = VoiceProxyHandler(agent_manager)
 @app.route("/")
 def index():
     """Serve the main application page."""
+    if app.static_folder is None:
+        logger.error("STATIC_FOLDER is not set. Cannot serve index.html.")
+        import sys
+        sys.exit(1)
     return send_from_directory(app.static_folder, INDEX_FILE)
 
 
@@ -75,7 +81,7 @@ def get_scenarios():
 
 
 @app.route(f"{API_SCENARIOS_ENDPOINT}/<scenario_id>")
-def get_scenario(scenario_id):
+def get_scenario(scenario_id: str):
     """Get a specific scenario by ID."""
     scenario = scenario_manager.get_scenario(scenario_id)
     if scenario:
@@ -86,7 +92,7 @@ def get_scenario(scenario_id):
 @app.route(API_AGENTS_CREATE_ENDPOINT, methods=["POST"])
 def create_agent():
     """Create a new agent for a scenario."""
-    data = request.json
+    data = cast(Dict[str, Any], request.json)
     scenario_id = data.get("scenario_id")
 
     if not scenario_id:
@@ -108,7 +114,7 @@ def create_agent():
 
 
 @app.route("/api/agents/<agent_id>", methods=["DELETE"])
-def delete_agent(agent_id):
+def delete_agent(agent_id: str):
     """Delete an agent."""
     try:
         agent_manager.delete_agent(agent_id)
@@ -121,11 +127,11 @@ def delete_agent(agent_id):
 @app.route(API_ANALYZE_ENDPOINT, methods=["POST"])
 def analyze_conversation():
     """Analyze a conversation for performance assessment."""
-    data = request.json
-    scenario_id = data.get("scenario_id")
-    transcript = data.get("transcript")
+    data = cast(Dict[str, Any], request.json)
+    scenario_id = cast(str, data.get("scenario_id"))
+    transcript = cast(str, data.get("transcript"))
     audio_data = data.get("audio_data", [])
-    reference_text = data.get("reference_text")
+    reference_text = cast(str, data.get("reference_text"))
 
     _log_analyze_request(scenario_id, transcript, reference_text)
 
@@ -137,7 +143,7 @@ def analyze_conversation():
     )
 
 
-def _log_analyze_request(scenario_id, transcript, reference_text):
+def _log_analyze_request(scenario_id: str, transcript: str, reference_text: str):
     """Log information about the analyze request."""
     logger.info(
         f"Analyze request - scenario: {scenario_id}, "
@@ -146,7 +152,7 @@ def _log_analyze_request(scenario_id, transcript, reference_text):
     )
 
 
-def _perform_conversation_analysis(scenario_id, transcript, audio_data, reference_text):
+def _perform_conversation_analysis(scenario_id: str, transcript: str, audio_data: List[Dict[str, Any]], reference_text: str):
     """Perform the actual conversation analysis."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -185,9 +191,10 @@ def audio_processor():
     return send_from_directory("static", AUDIO_PROCESSOR_FILE)
 
 
-@sock.route(WEBSOCKET_ENDPOINT)
-def voice_proxy(ws):
+@sock.route(WEBSOCKET_ENDPOINT)  # pyright: ignore[reportUnknownMemberType]
+def voice_proxy(ws: simple_websocket.ws.Server):
     """WebSocket endpoint for voice proxy."""
+
     logger.info("New WebSocket connection")
 
     try:
@@ -221,7 +228,7 @@ def generate_graph_scenario():
 
         if not canned_file.exists():
             logger.error(f"Canned Graph API file not found at {canned_file}")
-            graph_data = {"value": []}
+            graph_data: Dict[str, Any] = {"value": []}
         else:
             with open(canned_file) as f:
                 graph_data = json.load(f)
