@@ -216,10 +216,10 @@ class VoiceProxyHandler:
         session["max_response_output_tokens"] = agent_config["max_tokens"]
 
     async def _handle_message_forwarding(
-        self,
-        client_ws: simple_websocket.ws.Server,
-        azure_ws: websockets.asyncio.client.ClientConnection) -> None:
-        
+            self,
+            client_ws: simple_websocket.ws.Server,
+            azure_ws: websockets.asyncio.client.ClientConnection) -> None:
+
         """Handle bidirectional message forwarding."""
         tasks = [
             asyncio.create_task(self._forward_client_to_azure(client_ws, azure_ws)),
@@ -232,9 +232,9 @@ class VoiceProxyHandler:
             task.cancel()
 
     async def _forward_client_to_azure(
-        self,
-        client_ws: simple_websocket.ws.Server,
-        azure_ws: websockets.asyncio.client.ClientConnection) -> None:
+            self,
+            client_ws: simple_websocket.ws.Server,
+            azure_ws: websockets.asyncio.client.ClientConnection) -> None:
 
         """Forward messages from client to Azure."""
         try:
@@ -250,9 +250,9 @@ class VoiceProxyHandler:
             logger.debug("Client connection closed during forwarding")
 
     async def _forward_azure_to_client(
-        self,
-        azure_ws: websockets.asyncio.client.ClientConnection,
-        client_ws: simple_websocket.ws.Server) -> None:
+            self,
+            azure_ws: websockets.asyncio.client.ClientConnection,
+            client_ws: simple_websocket.ws.Server) -> None:
 
         """Forward messages from Azure to client."""
         try:
@@ -265,9 +265,9 @@ class VoiceProxyHandler:
             logger.debug("Client connection closed during forwarding")
 
     async def _send_message(
-        self,
-        ws: simple_websocket.ws.Server,
-        message: Dict[str, str | Dict[str, str]]) -> None:
+            self,
+            ws: simple_websocket.ws.Server,
+            message: Dict[str, str | Dict[str, str]]) -> None:
 
         """Send a JSON message to a WebSocket."""
         try:
