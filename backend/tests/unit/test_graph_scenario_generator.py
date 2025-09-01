@@ -109,7 +109,7 @@ class TestGraphScenarioGenerator:
 
         result = generator._format_meeting_list(meetings)
         expected = (
-            "- Team Standup with Alice, Bob\n" "- Client Call with Charlie, Diana, Eve"
+            "- Team Standup with Alice, Bob\n" + "- Client Call with Charlie, Diana, Eve"
         )
         assert result == expected
 
