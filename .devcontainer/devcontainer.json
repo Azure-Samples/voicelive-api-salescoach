@@ -20,5 +20,6 @@
             }
         }
     },
-    "remoteUser": "vscode"
+    "remoteUser": "vscode",
+    "postCreateCommand": "chmod +x ./.devcontainer/setup.sh && ./.devcontainer/setup.sh && chmod +x ./cleanall.sh"
 }
