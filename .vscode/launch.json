@@ -6,6 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/backend/src/app.py",
+            "python": "${workspaceFolder}/backend/.venv/bin/python",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {

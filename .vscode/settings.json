@@ -1,0 +1,82 @@
+{
+    // Controls the actions to be taken when a file is saved.
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll": "explicit",
+        "source.fixAll.ruff": "explicit",
+        "source.unusedImports": "explicit"
+    },
+
+    // Controls whether `editor.tabSize#` and `#editor.insertSpaces` will be automatically detected when a file is opened based on the file contents.
+    "editor.detectIndentation": true,
+
+    // Controls whether the editor should automatically format the line after typing.
+    "editor.formatOnSave": true,
+
+    // Python requires spaces instead of tabs.
+    "editor.insertSpaces": true,
+
+    // The number of spaces used for indentation or `"tabSize"` to use the value from `editor.tabSize#`. This setting is overridden based on the file contents when `#editor.detectIndentation` is on.
+    "editor.indentSize": "tabSize",
+
+    // Controls whether a space character is inserted when commenting.
+    "editor.comments.insertSpace": true,
+
+    // The number of spaces a tab is equal to. This setting is overridden based on the file contents when `editor.detectIndentation` is on.
+    "editor.tabSize": 4,
+
+    // Controls how the editor should render whitespace characters.
+    //  - none
+    //  - boundary: Render whitespace characters except for single spaces between words.
+    //  - selection: Render whitespace characters only on selected text.
+    //  - trailing: Render only trailing whitespace characters.
+    //  - all
+    "editor.renderWhitespace": "all",
+
+    // Controls the display of line numbers.
+    //  - off: Line numbers are not rendered.
+    //  - on: Line numbers are rendered as absolute number.
+    //  - relative: Line numbers are rendered as distance in lines to cursor position.
+    //  - interval: Line numbers are rendered every 10 lines.
+    "editor.lineNumbers": "on",
+
+    // Controls the trimming of whitespace on save.
+    "editor.trimAutoWhitespace": false,
+
+    // Line endings in Unix-style (otherwise causes many file changes when opening the solution from Windows).
+    "files.eol": "\n",
+
+    // Controls the removal of trailing whitespace on a single line.
+    "files.trimTrailingWhitespace": true,
+
+    // Keep empty lines in JSON files.
+    "json.format.keepLines": true,
+
+    // Controls whether the tree should render indent guides.
+    "workbench.tree.renderIndentGuides": "always",
+
+    // Python linting parameters
+    "pylint.args": [
+        "--rcfile=src/backend/.pylintrc"
+    ],
+
+    // Automatically activate the Python environment in the terminal.
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": false
+    },
+
+    "python.testing.pytestArgs": [
+        "-v",
+        "--maxfail=1",
+        "./backend/tests"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.experiments.optOutFrom": [
+        "pythonTerminalEnvVarActivation"
+    ],
+}

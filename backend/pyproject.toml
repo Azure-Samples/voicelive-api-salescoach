@@ -19,3 +19,34 @@ extend-exclude = '''
   | node_modules
 )/
 '''
+
+[tool.pylint.FORMAT]
+indent-string = "    "
+max-line-length = 88
+
+[tool.pylint.MASTER]
+disable = [
+  #"line-too-long",
+  #"missing-function-docstring",
+  #"missing-module-docstring",
+  #"too-few-public-methods",
+]
+ignore = [".venv"]
+
+[tool.ruff]
+# By default Ruff enable all checks, so do nothing here
+# select = [...]
+
+# Specify files/directories to exclude (e.g., virtualenv or generated files)
+exclude = [".venv", "__pycache__", "static", "templates"]
+
+# Specify the maximum line length for the code
+line-length = 88
+
+# Add any ignored rules (e.g., if you want to skip specific linter checks)
+lint.ignore = [
+  #"E501", # line-too-long
+]
+
+[tool.ruff.format]
+indent-style = "space"
