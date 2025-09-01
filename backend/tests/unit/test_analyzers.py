@@ -1,12 +1,13 @@
 """Tests for analyzer classes."""
 
-import pytest
-from unittest.mock import Mock, patch
-import tempfile
-import yaml
-from pathlib import Path
-import json
 import base64
+import json
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+import yaml
 
 from services.analyzers import ConversationAnalyzer, PronunciationAssessor
 

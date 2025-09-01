@@ -7,10 +7,11 @@
 
 import logging
 import uuid
-import yaml
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+
+import yaml
 
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient

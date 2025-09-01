@@ -1,8 +1,9 @@
 """Tests for the websocket_handler module."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 import json
+from unittest.mock import Mock, AsyncMock, patch
+
+import pytest
 
 from services.websocket_handler import VoiceProxyHandler
 
