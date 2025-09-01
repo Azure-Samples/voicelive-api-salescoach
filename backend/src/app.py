@@ -102,7 +102,9 @@ def create_agent():
     scenario = scenario_manager.get_scenario(scenario_id)
     if not scenario:
         logger.error(
-            f"Scenario not found: {scenario_id}. Available scenarios: {list(scenario_manager.scenarios.keys())} + generated: {list(scenario_manager.generated_scenarios.keys())}"
+            f"Scenario not found: {scenario_id}. "
+            f"Available scenarios: {list(scenario_manager.scenarios.keys())} + "
+            f"generated: {list(scenario_manager.generated_scenarios.keys())}"
         )
         return jsonify({"error": SCENARIO_NOT_FOUND}), HTTP_NOT_FOUND
 

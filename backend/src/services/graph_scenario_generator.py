@@ -102,7 +102,10 @@ class GraphScenarioGenerator:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at creating realistic business role-play scenarios for sales training. Generate engaging, professional scenarios that help salespeople prepare for real meetings.",
+                    "content": (
+                        "You are an expert at creating realistic business role-play scenarios for sales training. "
+                        "Generate engaging, professional scenarios that help salespeople prepare for real meetings."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -116,66 +119,63 @@ class GraphScenarioGenerator:
 
     def _build_scenario_generation_prompt(self, meetings: List[Dict[str, Any]]) -> str:
         """Build the prompt for OpenAI scenario generation."""
-        return f"""Generate a role-play scenario to help a salesperson prepare for their upcoming client meetings. Based on their calendar, the following meetings are scheduled:
-
-{self._format_meeting_list(meetings)}
-
-Create a realistic sales practice scenario for an upcoming customer meeting using the following structure:
-
-1. **Context**: Start with a quick summary.
-2. **Character**: Define the person the trainee will interact with (name, title, company background). The company description should include industry, size, and strategic focus.
-3. **Behavioral Guidelines (Act Human)**: Outline how the character should behave in conversation (e.g., open, skeptical, budget-conscious, visionary).
-4. **Character Profile**: Provide background experience and current responsibilities that shape the character's perspective.
-5. **Key Concerns**: List 2–3 specific business concerns, objections, or challenges the character should raise during the conversation. These should be realistic for their role and company context.
-6. **Instruction**: End by telling the AI to roleplay as this character, responding naturally and professionally, raising concerns where relevant.
-
-**Example output:**
-
-Discovery call with ContosoCare on SaaS platform.
-
-You are **Sarah Lee, Director of Patient Experience at ContosoCare**, a healthcare provider focused on delivering modern, patient-centered digital solutions while navigating strict compliance requirements.
-
-**BEHAVIORAL GUIDELINES (Act Human):**
-
-* Speak conversationally, avoid jargon overload
-* Show interest in how technology solves real problems
-* Ask open-ended questions about business outcomes
-
-**YOUR CHARACTER PROFILE:**
-
-* 12 years in healthcare operations and patient engagement
-* Recently led ContosoCare's shift to hybrid care models (in-person + telehealth)
-* Practical, budget-aware, but open to innovation if it improves patient satisfaction
-
-**KEY CONCERNS TO RAISE:**
-
-1. How does your platform handle HIPAA/GDPR compliance without slowing workflows?
-2. Our clinicians already struggle with multiple tools — how will this integrate with existing EMR systems?
-3. Budgets are tight — what ROI can we realistically expect in the first year?
-
-**Respond naturally as Sarah Lee would, maintaining professional tone while expressing genuine business concerns.**
-
-Directly start with the summary (No 'Context:')
-"""
+        return (
+            "Generate a role-play scenario to help a salesperson prepare for their upcoming client meetings. "
+            "Based on their calendar, the following meetings are scheduled:\n\n"
+            f"{self._format_meeting_list(meetings)}\n\n"
+            "Create a realistic sales practice scenario for an upcoming customer meeting using the following "
+            "structure:\n\n"
+            "1. **Context**: Start with a quick summary.\n"
+            "2. **Character**: Define the person the trainee will interact with (name, title, company background). "
+            "The company description should include industry, size, and strategic focus.\n"
+            "3. **Behavioral Guidelines (Act Human)**: Outline how the character should behave in conversation "
+            "(e.g., open, skeptical, budget-conscious, visionary).\n"
+            "4. **Character Profile**: Provide background experience and current responsibilities that shape the "
+            "character's perspective.\n"
+            "5. **Key Concerns**: List 2–3 specific business concerns, objections, or challenges the character should "
+            "raise during the conversation. These should be realistic for their role and company context.\n"
+            "6. **Instruction**: End by telling the AI to roleplay as this character, responding naturally and "
+            "professionally, raising concerns where relevant.\n\n"
+            "**Example output:**\n\n"
+            "Discovery call with ContosoCare on SaaS platform.\n\n"
+            "You are **Sarah Lee, Director of Patient Experience at ContosoCare**, a healthcare provider focused on "
+            "delivering modern, patient-centered digital solutions while navigating strict compliance requirements.\n\n"
+            "**BEHAVIORAL GUIDELINES (Act Human):**\n\n"
+            "* Speak conversationally, avoid jargon overload\n"
+            "* Show interest in how technology solves real problems\n"
+            "* Ask open-ended questions about business outcomes\n\n"
+            "**YOUR CHARACTER PROFILE:**\n\n"
+            "* 12 years in healthcare operations and patient engagement\n"
+            "* Recently led ContosoCare's shift to hybrid care models (in-person + telehealth)\n"
+            "* Practical, budget-aware, but open to innovation if it improves patient satisfaction\n\n"
+            "**KEY CONCERNS TO RAISE:**\n\n"
+            "1. How does your platform handle HIPAA/GDPR compliance without slowing workflows?\n"
+            "2. Our clinicians already struggle with multiple tools — how will this integrate with existing EMR "
+            "systems?\n"
+            "3. Budgets are tight — what ROI can we realistically expect in the first year?\n\n"
+            "**Respond naturally as Sarah Lee would, maintaining professional tone while expressing genuine business "
+            "concerns.**\n\n"
+            "Directly start with the summary (No 'Context:')\n"
+        )
 
     def _get_fallback_scenario_content(self) -> str:
         """Fallback scenario content when generation fails."""
-        return """You are Jordan Martinez, Operations Director at TechCorp Solutions, a mid-size technology consulting firm with 200+ employees. You're evaluating new software solutions to improve team collaboration and productivity.
-
-BEHAVIORAL GUIDELINES (Act Human):
-- Show genuine interest but maintain professional skepticism
-- Ask clarifying questions when information seems unclear
-- Take natural pauses to "think" before responding to complex proposals
-
-YOUR CHARACTER PROFILE:
-- 10+ years in operations and technology management
-- Results-driven but relationship-focused
-- Currently managing remote and hybrid teams
-
-KEY CONCERNS TO RAISE:
-1. Integration complexity with existing systems and workflows
-2. Change management and user adoption challenges
-3. Total cost of ownership including training and support
-
-Respond naturally as Jordan would, maintaining professional tone while expressing genuine business concerns about technology investments and team productivity.
-"""
+        return (
+            "You are Jordan Martinez, Operations Director at TechCorp Solutions, a mid-size technology "
+            "consulting firm with 200+ employees. You're evaluating new software solutions to improve team "
+            "collaboration and productivity.\n\n"
+            "BEHAVIORAL GUIDELINES (Act Human):\n"
+            "- Show genuine interest but maintain professional skepticism\n"
+            "- Ask clarifying questions when information seems unclear\n"
+            "- Take natural pauses to \"think\" before responding to complex proposals\n\n"
+            "YOUR CHARACTER PROFILE:\n"
+            "- 10+ years in operations and technology management\n"
+            "- Results-driven but relationship-focused\n"
+            "- Currently managing remote and hybrid teams\n\n"
+            "KEY CONCERNS TO RAISE:\n"
+            "1. Integration complexity with existing systems and workflows\n"
+            "2. Change management and user adoption challenges\n"
+            "3. Total cost of ownership including training and support\n\n"
+            "Respond naturally as Jordan would, maintaining professional tone while expressing genuine business "
+            "concerns about technology investments and team productivity.\n"
+        )

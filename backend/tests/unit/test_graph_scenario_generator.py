@@ -219,7 +219,8 @@ class TestGraphScenarioGenerator:
 
             # Patch the fallback method to return long content
             long_content = (
-                "This is a very long scenario description that should be truncated because it exceeds the 100 character limit set in the code. "
+                "This is a very long scenario description that should be truncated because it exceeds the 100 "
+                "character limit set in the code. "
                 * 3
             )
             generator._get_fallback_scenario_content = lambda: long_content

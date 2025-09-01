@@ -1,5 +1,5 @@
 [tool.black]
-line-length = 88
+line-length = 120
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
@@ -22,7 +22,7 @@ extend-exclude = '''
 
 [tool.pylint.FORMAT]
 indent-string = "    "
-max-line-length = 88
+max-line-length = 120
 
 [tool.pylint.MASTER]
 disable = [
@@ -41,7 +41,7 @@ ignore = [".venv"]
 exclude = [".venv", "__pycache__", "static", "templates"]
 
 # Specify the maximum line length for the code
-line-length = 88
+line-length = 120
 
 # Add any ignored rules (e.g., if you want to skip specific linter checks)
 lint.ignore = [
