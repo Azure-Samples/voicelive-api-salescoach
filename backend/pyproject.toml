@@ -33,6 +33,10 @@ disable = [
 ]
 ignore = [".venv"]
 
+# Add this section to disable W0212 for test files
+[tool.pylint."tests/**/*.py"] # Private member accessed
+disable = ["W0212"]
+
 [tool.ruff]
 # By default Ruff enable all checks, so do nothing here
 # select = [...]
@@ -47,6 +51,10 @@ line-length = 120
 lint.ignore = [
   #"E501", # line-too-long
 ]
+
+# Add per-file ignores for Ruff (SLF001 is equivalent to pylint's W0212)
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["SLF001"] # Private member accessed
 
 [tool.ruff.format]
 indent-style = "space"
