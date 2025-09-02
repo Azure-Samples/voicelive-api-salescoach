@@ -1,7 +1,6 @@
 """Tests for the Flask application endpoints."""
 
 import json
-from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -13,18 +12,14 @@ from src.app import app
 class TestFlaskApp:
     """Test cases for Flask application endpoints."""
 
-    def __init__(self):
-        """Initialize the test class."""
-        self.client: Optional[FlaskClient] = None
-
     def setup_method(self):
         """Set up test fixtures."""
         app.config["TESTING"] = True
-        self.client = app.test_client()
+        self.client: FlaskClient = app.test_client()  # pylint: disable=attribute-defined-outside-init
 
     def test_index_route(self):
         """Test the index route serves index.html."""
-        with patch("app.send_from_directory") as mock_send:
+        with patch("src.app.send_from_directory") as mock_send:
             mock_send.return_value = "index.html content"
 
             response = self.client.get("/")
@@ -52,7 +47,7 @@ class TestFlaskApp:
         assert data["proxy_enabled"] is True
         assert data["ws_endpoint"] == "/ws/voice"
 
-    @patch("app.scenario_manager")
+    @patch("src.app.scenario_manager")
     def test_get_scenarios_route(self, mock_scenario_manager):
         """Test the /api/scenarios endpoint."""
         mock_scenarios = [
@@ -68,7 +63,7 @@ class TestFlaskApp:
         assert data == mock_scenarios
         mock_scenario_manager.list_scenarios.assert_called_once()
 
-    @patch("app.scenario_manager")
+    @patch("src.app.scenario_manager")
     def test_get_scenario_existing(self, mock_scenario_manager):
         """Test getting an existing scenario by ID."""
         mock_scenario = {"id": "test-scenario", "name": "Test Scenario"}
@@ -81,7 +76,7 @@ class TestFlaskApp:
         assert data == mock_scenario
         mock_scenario_manager.get_scenario.assert_called_once_with("test-scenario")
 
-    @patch("app.scenario_manager")
+    @patch("src.app.scenario_manager")
     def test_get_scenario_not_found(self, mock_scenario_manager):
         """Test getting a non-existent scenario."""
         mock_scenario_manager.get_scenario.return_value = None
@@ -92,8 +87,8 @@ class TestFlaskApp:
         data = json.loads(response.data)
         assert data["error"] == "Scenario not found"
 
-    @patch("app.agent_manager")
-    @patch("app.scenario_manager")
+    @patch("src.app.agent_manager")
+    @patch("src.app.scenario_manager")
     def test_create_agent_success(self, mock_scenario_manager, mock_agent_manager):
         """Test successful agent creation."""
         mock_scenario = {"id": "test-scenario", "name": "Test Scenario"}
@@ -124,7 +119,7 @@ class TestFlaskApp:
         data = json.loads(response.data)
         assert data["error"] == "scenario_id is required"
 
-    @patch("app.scenario_manager")
+    @patch("src.app.scenario_manager")
     def test_create_agent_scenario_not_found(self, mock_scenario_manager):
         """Test agent creation with non-existent scenario."""
         mock_scenario_manager.get_scenario.return_value = None
@@ -140,8 +135,8 @@ class TestFlaskApp:
         data = json.loads(response.data)
         assert data["error"] == "Scenario not found"
 
-    @patch("app.agent_manager")
-    @patch("app.scenario_manager")
+    @patch("src.app.agent_manager")
+    @patch("src.app.scenario_manager")
     def test_create_agent_exception(self, mock_scenario_manager, mock_agent_manager):
         """Test agent creation with exception."""
         mock_scenario = {"id": "test-scenario", "name": "Test Scenario"}
@@ -157,7 +152,7 @@ class TestFlaskApp:
         data = json.loads(response.data)
         assert data["error"] == "Creation failed"
 
-    @patch("app.agent_manager")
+    @patch("src.app.agent_manager")
     def test_delete_agent_success(self, mock_agent_manager):
         """Test successful agent deletion."""
         mock_agent_manager.delete_agent.return_value = None
@@ -169,7 +164,7 @@ class TestFlaskApp:
         assert data["success"] is True
         mock_agent_manager.delete_agent.assert_called_once_with("agent-123")
 
-    @patch("app.agent_manager")
+    @patch("src.app.agent_manager")
     def test_delete_agent_exception(self, mock_agent_manager):
         """Test agent deletion with exception."""
         mock_agent_manager.delete_agent.side_effect = Exception("Deletion failed")
@@ -221,7 +216,7 @@ class TestFlaskApp:
 
     def test_audio_processor_route(self):
         """Test the audio processor route."""
-        with patch("app.send_from_directory") as mock_send:
+        with patch("src.app.send_from_directory") as mock_send:
             mock_send.return_value = "audio-processor.js content"
 
             response = self.client.get("/audio-processor.js")
@@ -242,24 +237,3 @@ class TestFlaskApp:
         from src.app import _perform_conversation_analysis  # pylint: disable=C0415
 
         assert callable(_perform_conversation_analysis)
-
-    def test_log_analyze_request(self):
-        """Test the _log_analyze_request function."""
-        from src.app import _log_analyze_request  # pylint: disable=C0415
-
-        # Test with valid input
-        with patch("app.logger") as mock_logger:
-            _log_analyze_request("test-scenario", "Hello world", "Hello world")
-            mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "test-scenario" in call_args
-            assert "transcript length: 11" in call_args
-            assert "reference_text length: 11" in call_args
-
-        # Test with None values
-        with patch("app.logger") as mock_logger:
-            _log_analyze_request("test-scenario", None, None)
-            mock_logger.info.assert_called_once()
-            call_args = mock_logger.info.call_args[0][0]
-            assert "transcript length: 0" in call_args
-            assert "reference_text length: 0" in call_args

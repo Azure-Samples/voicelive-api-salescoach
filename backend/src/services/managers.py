@@ -9,15 +9,15 @@ import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 import yaml
-
-from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
+from azure.identity import DefaultAzureCredential
 
 from src.config import config
 from src.services.graph_scenario_generator import GraphScenarioGenerator
+from src.services.scenario_utils import determine_scenario_directory
 
 # Constants
 ROLE_PLAY_FILE_SUFFIX = "-role-play.prompt.yml"
@@ -42,21 +42,10 @@ class ScenarioManager:
         Args:
             scenario_dir: Directory containing scenario YAML files
         """
-        self.scenario_dir = self._determine_scenario_directory(scenario_dir)
+        self.scenario_dir = determine_scenario_directory(scenario_dir)
         self.scenarios = self._load_scenarios()
         self.graph_generator = GraphScenarioGenerator()
         self.generated_scenarios: Dict[str, Any] = {}
-
-    def _determine_scenario_directory(self, scenario_dir: Optional[Path]) -> Path:
-        """Determine the correct scenario directory path."""
-        if scenario_dir is not None:
-            return scenario_dir
-
-        docker_path = Path(DOCKER_APP_PATH) / SCENARIO_DATA_DIR
-        if docker_path.exists():
-            return docker_path
-
-        return Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
 
     def _load_scenarios(self) -> Dict[str, Any]:
         """

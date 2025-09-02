@@ -12,13 +12,14 @@ import json
 import logging
 import wave
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 import azure.cognitiveservices.speech as speechsdk  # pyright: ignore[reportMissingTypeStubs]
 import yaml
 from openai import AzureOpenAI
 
 from src.config import config
+from src.services.scenario_utils import determine_scenario_directory
 
 logger = logging.getLogger(__name__)
 
@@ -61,20 +62,9 @@ class ConversationAnalyzer:
         Args:
             scenario_dir: Directory containing evaluation scenario files
         """
-        self.scenario_dir = self._determine_scenario_directory(scenario_dir)
+        self.scenario_dir = determine_scenario_directory(scenario_dir)
         self.evaluation_scenarios = self._load_evaluation_scenarios()
         self.openai_client = self._initialize_openai_client()
-
-    def _determine_scenario_directory(self, scenario_dir: Optional[Path]) -> Path:
-        """Determine the correct scenario directory path."""
-        if scenario_dir is not None:
-            return scenario_dir
-
-        docker_path = Path(DOCKER_APP_PATH) / SCENARIO_DATA_DIR
-        if docker_path.exists():
-            return docker_path
-
-        return Path(__file__).parent.parent.parent.parent / "data" / "scenarios"
 
     def _load_evaluation_scenarios(self) -> Dict[str, Any]:
         """

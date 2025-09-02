@@ -1,7 +1,7 @@
 """Tests for the websocket_handler module."""
 
 import json
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -19,7 +19,7 @@ class TestVoiceProxyHandler:
 
         assert handler.agent_manager == agent_manager
 
-    @patch("services.websocket_handler.config")
+    @patch("src.services.websocket_handler.config")
     def test_build_azure_url_with_azure_agent(self, mock_config):
         """Test building Azure URL with Azure agent configuration."""
         mock_config.__getitem__.side_effect = lambda key: {
@@ -36,7 +36,7 @@ class TestVoiceProxyHandler:
         assert "test-resource" in url
         assert "test-project" in url
 
-    @patch("services.websocket_handler.config")
+    @patch("src.services.websocket_handler.config")
     def test_build_azure_url_with_local_agent(self, mock_config):
         """Test building Azure URL with local agent configuration."""
         mock_config.__getitem__.side_effect = lambda key: {
@@ -54,7 +54,7 @@ class TestVoiceProxyHandler:
         assert "agent-id=" not in url or "agent-id=&" in url
         assert "test-resource" in url
 
-    @patch("services.websocket_handler.config")
+    @patch("src.services.websocket_handler.config")
     def test_build_azure_url_without_agent_config(self, mock_config):
         """Test building Azure URL without agent configuration."""
         mock_config.__getitem__.side_effect = lambda key: {
@@ -70,7 +70,7 @@ class TestVoiceProxyHandler:
         assert "agent-id=static-agent-123" in url
         assert "test-resource" in url
 
-    @patch("services.websocket_handler.config")
+    @patch("src.services.websocket_handler.config")
     @pytest.mark.asyncio
     async def test_send_initial_config_with_agent(self, mock_config):
         """Test sending initial configuration with agent config."""
