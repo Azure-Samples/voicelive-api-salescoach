@@ -50,7 +50,6 @@ line-length = 120
 # Add any ignored rules (e.g., if you want to skip specific linter checks)
 lint.ignore = [
   "BLE001",  # Do not catch blind exception: `Exception` (equivalent to pylint's broad-exception-caught)
-  "PLR0903", # Too few public methods (equivalent to pylint's too-few-public-methods)
   "PLR0913", # Too many arguments in function definition (equivalent to pylint's too-many-arguments)
   "PLR0917", # Too many positional arguments (equivalent to pylint's too-many-positional-arguments)
 ]

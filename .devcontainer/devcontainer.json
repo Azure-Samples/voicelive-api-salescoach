@@ -19,21 +19,22 @@
                 "ms-python.python",
                 "ms-python.vscode-python-envs",
                 "ms-toolsai.jupyter",
+                "charliermarsh.ruff",
                 "streetsidesoftware.code-spell-checker",
                 "tamasfe.even-better-toml"
             ],
             "settings": {
                 "python.analysis.extraPaths": [
-                    "${workspaceFolder}/backend"
+                    "${containerWorkspaceFolder}/backend"
                 ],
-                "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
-                "python.pythonPath": "${workspaceFolder}/backend/.venv/bin/python",
-                "python.venvPath": "${workspaceFolder}/backend/.venv",
-                "python.envFile": "${workspaceFolder}/backend/.env",
+                "python.defaultInterpreterPath": "${containerWorkspaceFolder}/backend/.venv/bin/python",
+                "python.pythonPath": "${containerWorkspaceFolder}/backend/.venv/bin/python",
+                "python.venvPath": "${containerWorkspaceFolder}/backend/.venv",
+                "python.envFile": "${containerWorkspaceFolder}/backend/.env",
                 "terminal.integrated.profiles.linux": {
                     "bash": {
                         "path": "bash",
-                        "args": [ "-c", "source ${workspaceFolder}/backend/.venv/bin/activate && bash" ]
+                        "args": [ "-c", "source ${containerWorkspaceFolder}/backend/.venv/bin/activate && bash" ]
                     }
                 }
             },
