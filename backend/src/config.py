@@ -29,7 +29,7 @@ class Config:
 
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from environment variables with defaults."""
-        config: Dict[str, Any] = {
+        result: Dict[str, Any] = {
             "azure_ai_resource_name": os.getenv("AZURE_AI_RESOURCE_NAME", ""),
             "azure_ai_region": os.getenv("AZURE_AI_REGION", DEFAULT_REGION),
             "azure_ai_project_name": os.getenv("AZURE_AI_PROJECT_NAME", ""),
@@ -50,7 +50,7 @@ class Config:
             ),
             "api_version": DEFAULT_API_VERSION,
         }
-        return config
+        return result
 
     def _parse_bool_env(self, env_var: str, default: bool = False) -> bool:
         """Parse boolean environment variable."""

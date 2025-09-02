@@ -337,7 +337,7 @@ CRITICAL INTERACTION GUIDELINES:
         max_tokens: int,
     ) -> Dict[str, Any]:
         """Create standardized agent configuration."""
-        config: Dict[str, Any] = {
+        result: Dict[str, Any] = {
             "scenario_id": scenario_id,
             "is_azure_agent": is_azure_agent,
             "instructions": instructions,
@@ -348,9 +348,9 @@ CRITICAL INTERACTION GUIDELINES:
         }
 
         if is_azure_agent:
-            config["azure_agent_id"] = agent_id
+            result["azure_agent_id"] = agent_id
 
-        return config
+        return result
 
     def get_agent(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """
