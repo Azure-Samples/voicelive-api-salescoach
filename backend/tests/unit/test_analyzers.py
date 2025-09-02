@@ -141,6 +141,7 @@ class TestConversationAnalyzer:
         assert messages[1]["content"] == prompt
         assert "expert sales conversation evaluator" in messages[0]["content"]
 
+# pylint: disable=R0801
     def test_analyze_conversation_with_openai_client(self):
         """Test analyzing conversation with mocked OpenAI client."""
         analyzer = ConversationAnalyzer()
@@ -183,6 +184,7 @@ class TestConversationAnalyzer:
             # Test that the method exists and can be called
             # Due to complexity of async mocking, we just verify the client is set
             assert analyzer.openai_client is not None
+# pylint: enable=R0801
 
 
 class TestPronunciationAssessor:

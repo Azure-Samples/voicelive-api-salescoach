@@ -134,6 +134,7 @@ class TestGraphScenarioGenerator:
         assert "Jordan Martinez" in result
         assert "TechCorp Solutions" in result
 
+# pylint: disable=R0801
     @patch("services.graph_scenario_generator.config")
     def test_create_graph_scenario_content_with_openai(self, mock_config):
         """Test scenario content creation with OpenAI client."""
@@ -156,6 +157,7 @@ class TestGraphScenarioGenerator:
 
         assert result == "Generated scenario content"
         mock_client.chat.completions.create.assert_called_once()
+# pylint: enable=R0801
 
     @patch("services.graph_scenario_generator.config")
     def test_create_graph_scenario_content_openai_none_response(self, mock_config):
