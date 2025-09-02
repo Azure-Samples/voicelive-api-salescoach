@@ -119,9 +119,7 @@ class TestAgentManager:
 
     @patch("src.services.managers.config")
     @patch("src.services.managers.AIProjectClient")
-    def test_create_agent_success_azure(
-        self, mock_ai_client, mock_config
-    ):
+    def test_create_agent_success_azure(self, mock_ai_client, mock_config):
         """Test successful Azure agent creation."""
         # Mock configuration
         mock_config.__getitem__.side_effect = lambda key: {

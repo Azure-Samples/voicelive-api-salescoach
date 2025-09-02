@@ -120,9 +120,7 @@ class ConversationAnalyzer:
             logger.error("Failed to initialize OpenAI client: %s", e)
             return None
 
-    async def analyze_conversation(
-        self, scenario_id: str, transcript: str
-    ) -> Optional[Dict[str, Any]]:
+    async def analyze_conversation(self, scenario_id: str, transcript: str) -> Optional[Dict[str, Any]]:
         """
         Analyze a conversation transcript.
 
@@ -147,9 +145,7 @@ class ConversationAnalyzer:
 
         return await self._call_evaluation_model(evaluation_scenario, transcript)
 
-    def _build_evaluation_prompt(
-        self, scenario: Dict[str, Any], transcript: str
-    ) -> str:
+    def _build_evaluation_prompt(self, scenario: Dict[str, Any], transcript: str) -> str:
         """Build the evaluation prompt."""
         base_prompt = scenario["messages"][0]["content"]
         return f"""{base_prompt}
@@ -177,9 +173,7 @@ class ConversationAnalyzer:
         {transcript}
         """
 
-    async def _call_evaluation_model(
-        self, scenario: Dict[str, Any], transcript: str
-    ) -> Optional[Dict[str, Any]]:
+    async def _call_evaluation_model(self, scenario: Dict[str, Any], transcript: str) -> Optional[Dict[str, Any]]:
         """
         Call OpenAI with structured outputs for evaluation.
 
@@ -203,9 +197,7 @@ class ConversationAnalyzer:
                 None,
                 lambda: openai_client.chat.completions.create(
                     model=config["model_deployment_name"],
-                    messages=self._build_evaluation_messages(
-                        evaluation_prompt
-                    ),  # pyright: ignore[reportArgumentType]
+                    messages=self._build_evaluation_messages(evaluation_prompt),  # pyright: ignore[reportArgumentType]
                     response_format=self._get_response_format(),  # pyright: ignore[reportArgumentType]
                 ),
             )
@@ -221,9 +213,7 @@ class ConversationAnalyzer:
             logger.error("Error in evaluation model: %s", e)
             return None
 
-    def _build_evaluation_messages(
-        self, evaluation_prompt: str
-    ) -> List[Dict[str, str]]:
+    def _build_evaluation_messages(self, evaluation_prompt: str) -> List[Dict[str, str]]:
         """Build the messages for the evaluation API call."""
         return [
             {
@@ -300,9 +290,7 @@ class ConversationAnalyzer:
             },
         }
 
-    def _process_evaluation_result(
-        self, evaluation_json: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _process_evaluation_result(self, evaluation_json: Dict[str, Any]) -> Dict[str, Any]:
         """Process and validate evaluation results."""
         evaluation_json["speaking_tone_style"]["total"] = sum(
             [
@@ -320,9 +308,7 @@ class ConversationAnalyzer:
             ]
         )
 
-        logger.info(
-            "Evaluation processed with score: %s", evaluation_json.get('overall_score')
-        )
+        logger.info("Evaluation processed with score: %s", evaluation_json.get("overall_score"))
         return evaluation_json
 
 
@@ -347,28 +333,20 @@ class PronunciationAssessor:
             wav_buffer.seek(0)
             return wav_buffer.read()
 
-    def _log_assessment_info(
-        self, wav_audio: bytes, reference_text: Optional[str]
-    ) -> None:
+    def _log_assessment_info(self, wav_audio: bytes, reference_text: Optional[str]) -> None:
         """Log information about the assessment being performed."""
-        logger.info(
-            "Starting pronunciation assessment with audio size: %s bytes", len(wav_audio)
-        )
-        logger.info("Reference text: %s", reference_text or 'None')
-        logger.info("Speech key configured: %s", 'Yes' if self.speech_key else 'No')
+        logger.info("Starting pronunciation assessment with audio size: %s bytes", len(wav_audio))
+        logger.info("Reference text: %s", reference_text or "None")
+        logger.info("Speech key configured: %s", "Yes" if self.speech_key else "No")
         logger.info("Speech region: %s", self.speech_region)
 
     def _create_speech_config(self) -> speechsdk.SpeechConfig:
         """Create speech configuration."""
-        speech_config = speechsdk.SpeechConfig(
-            subscription=self.speech_key, region=self.speech_region
-        )
+        speech_config = speechsdk.SpeechConfig(subscription=self.speech_key, region=self.speech_region)
         speech_config.speech_recognition_language = config["azure_speech_language"]
         return speech_config
 
-    def _create_pronunciation_config(
-        self, reference_text: Optional[str]
-    ) -> speechsdk.PronunciationAssessmentConfig:
+    def _create_pronunciation_config(self, reference_text: Optional[str]) -> speechsdk.PronunciationAssessmentConfig:
         """Create pronunciation assessment configuration."""
         pronunciation_config = speechsdk.PronunciationAssessmentConfig(
             reference_text=reference_text or "",
@@ -458,9 +436,7 @@ class PronunciationAssessor:
 
         return combined_audio
 
-    async def _perform_assessment(
-        self, wav_audio: bytes, reference_text: Optional[str]
-    ) -> Optional[Dict[str, Any]]:
+    async def _perform_assessment(self, wav_audio: bytes, reference_text: Optional[str]) -> Optional[Dict[str, Any]]:
         """Perform the actual pronunciation assessment."""
         self._log_assessment_info(wav_audio, reference_text)
 
@@ -475,16 +451,12 @@ class PronunciationAssessor:
         )
         pronunciation_config.apply_to(speech_recognizer)
 
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, speech_recognizer.recognize_once
-        )
+        result = await asyncio.get_event_loop().run_in_executor(None, speech_recognizer.recognize_once)
 
         pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
         return self._build_assessment_result(pronunciation_result, result)
 
-    def _extract_word_details(
-        self, result: speechsdk.SpeechRecognitionResult
-    ) -> List[Dict[str, Any]]:
+    def _extract_word_details(self, result: speechsdk.SpeechRecognitionResult) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
         try:
             json_result = json.loads(
@@ -500,12 +472,8 @@ class PronunciationAssessor:
                     words.append(
                         {
                             "word": word_info.get("Word", ""),
-                            "accuracy": word_info.get(
-                                "PronunciationAssessment", {}
-                            ).get("AccuracyScore", 0),
-                            "error_type": word_info.get(
-                                "PronunciationAssessment", {}
-                            ).get("ErrorType", "None"),
+                            "accuracy": word_info.get("PronunciationAssessment", {}).get("AccuracyScore", 0),
+                            "error_type": word_info.get("PronunciationAssessment", {}).get("ErrorType", "None"),
                         }
                     )
 

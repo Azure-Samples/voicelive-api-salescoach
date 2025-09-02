@@ -108,9 +108,7 @@ class TestGraphScenarioGenerator:
         ]
 
         result = generator._format_meeting_list(meetings)
-        expected = (
-            "- Team Standup with Alice, Bob\n" + "- Client Call with Charlie, Diana, Eve"
-        )
+        expected = "- Team Standup with Alice, Bob\n" + "- Client Call with Charlie, Diana, Eve"
         assert result == expected
 
     def test_create_graph_scenario_content_no_meetings(self):
@@ -134,7 +132,7 @@ class TestGraphScenarioGenerator:
         assert "Jordan Martinez" in result
         assert "TechCorp Solutions" in result
 
-# pylint: disable=R0801
+    # pylint: disable=R0801
     @patch("src.services.graph_scenario_generator.config")
     def test_create_graph_scenario_content_with_openai(self, mock_config):
         """Test scenario content creation with OpenAI client."""
@@ -157,7 +155,8 @@ class TestGraphScenarioGenerator:
 
         assert result == "Generated scenario content"
         mock_client.chat.completions.create.assert_called_once()
-# pylint: enable=R0801
+
+    # pylint: enable=R0801
 
     @patch("src.services.graph_scenario_generator.config")
     def test_create_graph_scenario_content_openai_none_response(self, mock_config):
@@ -222,8 +221,7 @@ class TestGraphScenarioGenerator:
             # Patch the fallback method to return long content
             long_content = (
                 "This is a very long scenario description that should be truncated because it exceeds the 100 "
-                "character limit set in the code. "
-                * 3
+                "character limit set in the code. " * 3
             )
             generator._get_fallback_scenario_content = lambda: long_content
 
@@ -241,19 +239,13 @@ class TestGraphScenarioGenerator:
             }.get(key, "test-value")
 
             # Create graph data with more than 3 meetings
-            graph_data = {
-                "value": [
-                    {"subject": f"Meeting {i}", "attendees": []} for i in range(5)
-                ]
-            }
+            graph_data = {"value": [{"subject": f"Meeting {i}", "attendees": []} for i in range(5)]}
 
             generator = GraphScenarioGenerator()
 
             # Test the generate_scenario_from_graph method which processes meetings
             # We can test this by mocking the _create_graph_scenario_content method
-            with patch.object(
-                generator, "_create_graph_scenario_content"
-            ) as mock_create:
+            with patch.object(generator, "_create_graph_scenario_content") as mock_create:
                 mock_create.return_value = "Test scenario content"
 
                 generator.generate_scenario_from_graph(graph_data)
@@ -278,9 +270,7 @@ class TestGraphScenarioGenerator:
                 "value": [
                     {
                         "subject": "Big Meeting",
-                        "attendees": [
-                            {"emailAddress": {"name": f"Person {i}"}} for i in range(5)
-                        ],
+                        "attendees": [{"emailAddress": {"name": f"Person {i}"}} for i in range(5)],
                     }
                 ]
             }
@@ -288,9 +278,7 @@ class TestGraphScenarioGenerator:
             generator = GraphScenarioGenerator()
 
             # Test by mocking the _create_graph_scenario_content method
-            with patch.object(
-                generator, "_create_graph_scenario_content"
-            ) as mock_create:
+            with patch.object(generator, "_create_graph_scenario_content") as mock_create:
                 mock_create.return_value = "Test scenario content"
 
                 generator.generate_scenario_from_graph(graph_data)

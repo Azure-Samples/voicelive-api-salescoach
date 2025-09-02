@@ -126,9 +126,7 @@ class ScenarioManager:
 
         return scenarios
 
-    def generate_scenario_from_graph(
-        self, graph_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def generate_scenario_from_graph(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a scenario based on Microsoft Graph API data.
 
@@ -182,18 +180,14 @@ CRITICAL INTERACTION GUIDELINES:
         try:
             project_endpoint = config["project_endpoint"]
             if not project_endpoint:
-                logger.warning(
-                    "PROJECT_ENDPOINT not configured - falling back to instruction-based approach"
-                )
+                logger.warning("PROJECT_ENDPOINT not configured - falling back to instruction-based approach")
                 return None
 
             client = AIProjectClient(
                 endpoint=project_endpoint,
                 credential=self.credential,
             )
-            logger.info(
-                "AI Project client initialized with endpoint: %s", project_endpoint
-            )
+            logger.info("AI Project client initialized with endpoint: %s", project_endpoint)
             return client
         except Exception as e:
             logger.error("Failed to initialize AI Project client: %s", e)
@@ -214,9 +208,7 @@ CRITICAL INTERACTION GUIDELINES:
             Exception: If agent creation fails
         """
 
-        scenario_instructions = scenario_data.get("messages", [{}])[0].get(
-            "content", ""
-        )
+        scenario_instructions = scenario_data.get("messages", [{}])[0].get("content", "")
         combined_instructions = scenario_instructions + self.BASE_INSTRUCTIONS
 
         model_name = scenario_data.get("model", config["model_deployment_name"])
@@ -224,12 +216,8 @@ CRITICAL INTERACTION GUIDELINES:
         max_tokens = scenario_data.get("modelParameters", {}).get("max_tokens", 2000)
 
         if self.use_azure_ai_agents and self.project_client:
-            return self._create_azure_agent(
-                scenario_id, combined_instructions, model_name, temperature, max_tokens
-            )
-        return self._create_local_agent(
-            scenario_id, combined_instructions, model_name, temperature, max_tokens
-        )
+            return self._create_azure_agent(scenario_id, combined_instructions, model_name, temperature, max_tokens)
+        return self._create_local_agent(scenario_id, combined_instructions, model_name, temperature, max_tokens)
 
     def _create_azure_agent(
         self,

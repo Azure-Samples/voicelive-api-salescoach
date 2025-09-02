@@ -104,9 +104,7 @@ class TestFlaskApp:
         data = json.loads(response.data)
         assert data["agent_id"] == "agent-123"
         assert data["scenario_id"] == "test-scenario"
-        mock_agent_manager.create_agent.assert_called_once_with(
-            "test-scenario", mock_scenario
-        )
+        mock_agent_manager.create_agent.assert_called_once_with("test-scenario", mock_scenario)
 
     def test_create_agent_missing_scenario_id(self):
         """Test agent creation without scenario_id."""

@@ -74,9 +74,7 @@ class TestVoiceProxyHandler:
     @pytest.mark.asyncio
     async def test_send_initial_config_with_agent(self, mock_config):
         """Test sending initial configuration with agent config."""
-        mock_config.__getitem__.side_effect = lambda key: {
-            "model_deployment_name": "gpt-4o"
-        }.get(key, "default")
+        mock_config.__getitem__.side_effect = lambda key: {"model_deployment_name": "gpt-4o"}.get(key, "default")
 
         handler = VoiceProxyHandler(Mock())
 

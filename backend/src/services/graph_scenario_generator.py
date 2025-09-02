@@ -41,9 +41,7 @@ class GraphScenarioGenerator:
             logger.error("Failed to initialize OpenAI client for scenarios: %s", e)
             return None
 
-    def generate_scenario_from_graph(
-        self, graph_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def generate_scenario_from_graph(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a scenario based on Microsoft Graph API data.
 
@@ -57,10 +55,7 @@ class GraphScenarioGenerator:
         if "value" in graph_data:
             for event in graph_data["value"][:3]:
                 subject = event.get("subject", "Meeting")
-                attendees = [
-                    attendee["emailAddress"]["name"]
-                    for attendee in event.get("attendees", [])[:3]
-                ]
+                attendees = [attendee["emailAddress"]["name"] for attendee in event.get("attendees", [])[:3]]
                 meetings.append({"subject": subject, "attendees": attendees})
 
         scenario_content = self._create_graph_scenario_content(meetings)
@@ -81,10 +76,7 @@ class GraphScenarioGenerator:
 
     def _format_meeting_list(self, meetings: List[Dict[str, Any]]) -> str:
         """Format the list of meetings for display."""
-        return "\n".join(
-            f"- {meeting['subject']} with {', '.join(meeting['attendees'][:3])}"
-            for meeting in meetings
-        )
+        return "\n".join(f"- {meeting['subject']} with {', '.join(meeting['attendees'][:3])}" for meeting in meetings)
 
     def _create_graph_scenario_content(self, meetings: List[Dict[str, Any]]) -> str:
         """Create scenario content based on meetings using OpenAI."""
@@ -167,7 +159,7 @@ class GraphScenarioGenerator:
             "BEHAVIORAL GUIDELINES (Act Human):\n"
             "- Show genuine interest but maintain professional skepticism\n"
             "- Ask clarifying questions when information seems unclear\n"
-            "- Take natural pauses to \"think\" before responding to complex proposals\n\n"
+            '- Take natural pauses to "think" before responding to complex proposals\n\n'
             "YOUR CHARACTER PROFILE:\n"
             "- 10+ years in operations and technology management\n"
             "- Results-driven but relationship-focused\n"

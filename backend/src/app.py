@@ -9,17 +9,17 @@ import asyncio
 import json
 import logging
 import os
-from pathlib import Path
 import time
-
+from pathlib import Path
 from typing import Any, Dict, List, cast
+
+import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 from flask import Flask, jsonify, request, send_from_directory
 from flask_sock import Sock  # pyright: ignore[reportMissingTypeStubs]
-import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 
 from src.config import config
-from src.services.managers import ScenarioManager, AgentManager
 from src.services.analyzers import ConversationAnalyzer, PronunciationAssessor
+from src.services.managers import AgentManager, ScenarioManager
 from src.services.websocket_handler import VoiceProxyHandler
 
 # Constants
@@ -106,12 +106,10 @@ def create_agent():
     scenario = scenario_manager.get_scenario(scenario_id)
     if not scenario:
         logger.error(
-            "Scenario not found: %s. "
-            "Available scenarios: %s + "
-            "generated: %s",
+            "Scenario not found: %s. Available scenarios: %s + generated: %s",
             scenario_id,
             list(scenario_manager.scenarios.keys()),
-            list(scenario_manager.generated_scenarios.keys())
+            list(scenario_manager.generated_scenarios.keys()),
         )
         return jsonify({"error": SCENARIO_NOT_FOUND}), HTTP_NOT_FOUND
 
@@ -148,20 +146,16 @@ def analyze_conversation():
     if not scenario_id or not transcript:
         return jsonify({"error": TRANSCRIPT_REQUIRED}), HTTP_BAD_REQUEST
 
-    return _perform_conversation_analysis(
-        scenario_id, transcript, audio_data, reference_text
-    )
+    return _perform_conversation_analysis(scenario_id, transcript, audio_data, reference_text)
 
 
 def _log_analyze_request(scenario_id: str, transcript: str, reference_text: str):
     """Log information about the analyze request."""
     logger.info(
-        "Analyze request - scenario: %s, "
-        "transcript length: %s, "
-        "reference_text length: %s",
+        "Analyze request - scenario: %s, transcript length: %s, reference_text length: %s",
         scenario_id,
-        len(transcript or ''),
-        len(reference_text or '')
+        len(transcript or ""),
+        len(reference_text or ""),
     )
 
 
@@ -181,9 +175,7 @@ def _perform_conversation_analysis(
             pronunciation_assessor.assess_pronunciation(audio_data, reference_text),
         ]
 
-        results = loop.run_until_complete(
-            asyncio.gather(*tasks, return_exceptions=True)
-        )
+        results = loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
 
         ai_assessment, pronunciation = results
 
@@ -195,9 +187,7 @@ def _perform_conversation_analysis(
             logger.error("Pronunciation assessment failed: %s", pronunciation)
             pronunciation = None
 
-        return jsonify(
-            {"ai_assessment": ai_assessment, "pronunciation_assessment": pronunciation}
-        )
+        return jsonify({"ai_assessment": ai_assessment, "pronunciation_assessment": pronunciation})
 
     finally:
         loop.close()
@@ -233,13 +223,9 @@ def generate_graph_scenario():
 
     try:
         docker_canned_file = Path("/app/data/graph-api-canned.json")
-        dev_canned_file = (
-            Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
-        )
+        dev_canned_file = Path(__file__).parent.parent.parent / "data" / "graph-api-canned.json"
 
-        canned_file = (
-            docker_canned_file if docker_canned_file.exists() else dev_canned_file
-        )
+        canned_file = docker_canned_file if docker_canned_file.exists() else dev_canned_file
 
         if not canned_file.exists():
             logger.error("Canned Graph API file not found at %s", canned_file)
