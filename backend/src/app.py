@@ -245,7 +245,7 @@ def generate_graph_scenario():
             logger.error("Canned Graph API file not found at %s", canned_file)
             graph_data: Dict[str, Any] = {"value": []}
         else:
-            with open(canned_file) as f:
+            with open(canned_file, encoding="utf-8") as f:
                 graph_data = json.load(f)
 
         scenario = scenario_manager.generate_scenario_from_graph(graph_data)

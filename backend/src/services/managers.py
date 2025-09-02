@@ -88,7 +88,7 @@ class ScenarioManager:
     def _load_scenario_file(self, file: Path) -> Optional[Dict[str, Any]]:
         """Load a single scenario file."""
         try:
-            with open(file) as f:
+            with open(file, encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except Exception as e:
             logger.error("Error loading scenario %s: %s", file, e)

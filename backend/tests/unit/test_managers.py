@@ -33,7 +33,7 @@ class TestScenarioManager:
             }
 
             scenario_file = scenario_dir / "test-scenario-role-play.prompt.yml"
-            with open(scenario_file, "w") as f:
+            with open(scenario_file, "w", encoding="utf-8") as f:
                 yaml.safe_dump(scenario_data, f)
 
             manager = ScenarioManager(scenario_dir=scenario_dir)

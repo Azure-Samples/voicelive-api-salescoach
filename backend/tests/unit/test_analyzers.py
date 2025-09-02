@@ -34,7 +34,7 @@ class TestConversationAnalyzer:
             }
 
             scenario_file = scenario_dir / "test-scenario-evaluation.prompt.yml"
-            with open(scenario_file, "w") as f:
+            with open(scenario_file, "w", encoding="utf-8") as f:
                 yaml.safe_dump(scenario_data, f)
 
             analyzer = ConversationAnalyzer(scenario_dir=scenario_dir)

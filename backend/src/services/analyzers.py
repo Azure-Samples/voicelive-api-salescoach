@@ -91,7 +91,7 @@ class ConversationAnalyzer:
 
         for file in self.scenario_dir.glob(EVALUATION_FILE_SUFFIX):
             try:
-                with open(file) as f:
+                with open(file, encoding="utf-8") as f:
                     scenario = yaml.safe_load(f)
                     scenario_id = file.stem.replace(EVALUATION_SUFFIX_REMOVAL, "")
                     scenarios[scenario_id] = scenario
