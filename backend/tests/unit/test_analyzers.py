@@ -247,7 +247,7 @@ class TestPronunciationAssessor:
         mock_result.properties.get.return_value = "{}"
 
         words = assessor._extract_word_details(mock_result)
-        assert words == []
+        assert not words
 
     def test_extract_word_details_with_words(self):
         """Test extracting word details with actual words."""
@@ -331,7 +331,7 @@ class TestPronunciationAssessor:
 
         words = assessor._extract_word_details(mock_result)
 
-        assert words == []
+        assert not words
 
     def test_assess_pronunciation_with_valid_audio(self):
         """Test pronunciation assessment with valid audio data setup."""
