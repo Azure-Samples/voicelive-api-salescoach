@@ -27,7 +27,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_APP=src/app.py \
     FLASK_ENV=production \
     PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org pypi.python.org" \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
