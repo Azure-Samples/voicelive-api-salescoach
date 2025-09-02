@@ -65,6 +65,7 @@ export default function App() {
   const [currentAgent, setCurrentAgent] = useState<string | null>(null)
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [selectedScenarioData, setSelectedScenarioData] = useState<any>(null)
+  const [conversationEndedReason, setConversationEndedReason] = useState<string | null>(null)
 
   const { scenarios, selectedScenario, setSelectedScenario, loading } =
     useScenarios()
@@ -103,11 +104,28 @@ export default function App() {
     }
   }, [])
 
-  const { connected, messages, send, clearMessages, getRecordings } =
+  const { recording, toggleRecording, getAudioRecording, forceStopRecording } =
+    useRecorder((base64: string) => {
+      // This will be set after useRealtime is called
+      if (send) {
+        send({ type: 'input_audio_buffer.append', audio: base64 })
+      }
+    })
+
+  const handleConversationEnded = useCallback((reason: string) => {
+    setConversationEndedReason(reason)
+    // Force stop recording and mute microphone when conversation ends
+    if (recording) {
+      forceStopRecording()
+    }
+  }, [recording, forceStopRecording])
+
+  const { connected, messages, conversationEnded, send, clearMessages, getRecordings } =
     useRealtime({
       agentId: currentAgent,
       onMessage: handleWebRTCMessage,
       onAudioDelta: playAudio,
+      onConversationEnded: handleConversationEnded,
     })
 
   const sendOffer = useCallback(
@@ -118,16 +136,6 @@ export default function App() {
   )
 
   const { setupWebRTC, handleAnswer, videoRef } = useWebRTC(sendOffer)
-
-  const sendAudioChunk = useCallback(
-    (base64: string) => {
-      send({ type: 'input_audio_buffer.append', audio: base64 })
-    },
-    [send]
-  )
-
-  const { recording, toggleRecording, getAudioRecording } =
-    useRecorder(sendAudioChunk)
 
   const handleStart = async () => {
     if (!selectedScenario) return
@@ -171,6 +179,24 @@ export default function App() {
       setShowLoading(false)
     }
   }
+
+  const handleToggleRecording = useCallback(() => {
+    // If conversation ended, refresh the page to start completely fresh
+    if (conversationEndedReason) {
+      window.location.reload()
+      return
+    }
+    toggleRecording()
+  }, [conversationEndedReason, toggleRecording])
+
+  const handleClearConversation = useCallback(() => {
+    clearMessages()
+    setConversationEndedReason(null)
+    // Also force stop recording if it's active
+    if (recording) {
+      forceStopRecording()
+    }
+  }, [clearMessages, recording, forceStopRecording])
 
   const handleScenarioGenerated = useCallback((scenario: any) => {
     setSelectedScenarioData(scenario)
@@ -238,8 +264,10 @@ export default function App() {
             recording={recording}
             connected={connected}
             canAnalyze={messages.length > 0}
-            onToggleRecording={toggleRecording}
-            onClear={clearMessages}
+            conversationEnded={conversationEnded}
+            conversationEndedReason={conversationEndedReason}
+            onToggleRecording={handleToggleRecording}
+            onClear={handleClearConversation}
             onAnalyze={handleAnalyze}
             scenario={activeScenario}
           />

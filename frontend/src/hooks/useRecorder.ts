@@ -43,6 +43,7 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
   const [recording, setRecording] = useState(false)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const workletRef = useRef<AudioWorkletNode | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const audioRecording = useRef<any[]>([])
 
   const initAudio = useCallback(async () => {
@@ -73,6 +74,8 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
         echoCancellation: true,
       },
     })
+
+    streamRef.current = stream
 
     const source = audioCtx.createMediaStreamSource(stream)
     const worklet = new AudioWorkletNode(audioCtx, 'audio-recorder')
@@ -110,8 +113,22 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
       workletRef.current.disconnect()
       workletRef.current = null
     }
+
+    // Stop all tracks to properly mute the microphone
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop()
+      })
+      streamRef.current = null
+    }
+
     setRecording(false)
   }, [])
+
+  const forceStopRecording = useCallback(() => {
+    // Force stop recording (for conversation end scenarios)
+    stopRecording()
+  }, [stopRecording])
 
   const toggleRecording = useCallback(async () => {
     if (recording) {
@@ -127,5 +144,6 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
     recording,
     toggleRecording,
     getAudioRecording,
+    forceStopRecording,
   }
 }

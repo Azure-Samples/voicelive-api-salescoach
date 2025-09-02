@@ -81,6 +81,8 @@ interface Props {
   recording: boolean
   connected: boolean
   canAnalyze: boolean
+  conversationEnded?: boolean
+  conversationEndedReason?: string | null
   onToggleRecording: () => void
   onClear: () => void
   onAnalyze: () => void
@@ -92,6 +94,8 @@ export function ChatPanel({
   recording,
   connected: _connected,
   canAnalyze,
+  conversationEnded = false,
+  conversationEndedReason,
   onToggleRecording,
   onClear,
   onAnalyze,
@@ -124,6 +128,20 @@ export function ChatPanel({
           </div>
         ) : (
           <>
+            {conversationEnded && conversationEndedReason && (
+              <div className={`${styles.message} ${styles.assistantMessage}`}>
+                <Text
+                  size={300}
+                  style={{
+                    fontStyle: 'italic',
+                    color: tokens.colorNeutralForeground3,
+                  }}
+                >
+                  Conversation ended: {conversationEndedReason}
+                </Text>
+              </div>
+            )}
+
             {messages
               .slice()
               .reverse()
@@ -149,7 +167,11 @@ export function ChatPanel({
           icon={recording ? <MicOffRegular /> : <MicRegular />}
           onClick={onToggleRecording}
         >
-          {recording ? 'Stop Recording' : 'Start Recording'}
+          {conversationEnded
+            ? 'Start New Session'
+            : recording
+            ? 'Stop Recording'
+            : 'Start Recording'}
         </Button>
 
         <Button appearance="subtle" icon={<DeleteRegular />} onClick={onClear}>

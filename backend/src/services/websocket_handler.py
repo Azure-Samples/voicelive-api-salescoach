@@ -33,6 +33,9 @@ DEFAULT_ECHO_CANCELLATION_TYPE = "server_echo_cancellation"
 DEFAULT_AVATAR_CHARACTER = "lisa"
 DEFAULT_AVATAR_STYLE = "casual-sitting"
 
+# Function calling constants
+END_CONVERSATION_FUNCTION_NAME = "end_conversation"
+
 # Message types
 SESSION_UPDATE_TYPE = "session.update"
 PROXY_CONNECTED_TYPE = "proxy.connected"
@@ -202,6 +205,24 @@ class VoiceProxyHandler:
                     "character": DEFAULT_AVATAR_CHARACTER,
                     "style": DEFAULT_AVATAR_STYLE,
                 },
+                "tools": [
+                    {
+                        "type": "function",
+                        "name": END_CONVERSATION_FUNCTION_NAME,
+                        "description": "End the conversation when it becomes unprofessional, inappropriate, or abusive. Use this to professionally conclude the interaction.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "reason": {
+                                    "type": "string",
+                                    "description": "Brief professional reason for ending the conversation"
+                                }
+                            },
+                            "required": ["reason"]
+                        }
+                    }
+                ],
+                "tool_choice": "auto"
             },
         }
 
@@ -223,7 +244,7 @@ class VoiceProxyHandler:
         """Handle bidirectional message forwarding."""
         tasks = [
             asyncio.create_task(self._forward_client_to_azure(client_ws, azure_ws)),
-            asyncio.create_task(self._forward_azure_to_client(azure_ws, client_ws)),
+            asyncio.create_task(self._forward_azure_to_client_with_functions(azure_ws, client_ws)),
         ]
 
         _, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -250,15 +271,24 @@ class VoiceProxyHandler:
         except Exception:
             logger.debug("Client connection closed during forwarding")
 
-    async def _forward_azure_to_client(
+    async def _forward_azure_to_client_with_functions(
         self,
         azure_ws: websockets.asyncio.client.ClientConnection,
         client_ws: simple_websocket.ws.Server,
     ) -> None:
-        """Forward messages from Azure to client."""
+        """Forward messages from Azure to client with function call handling."""
         try:
             async for message in azure_ws:
                 logger.debug(f"Azure->Client: {message[:LOG_MESSAGE_MAX_LENGTH]}")
+                
+                # Check if this is a function call
+                try:
+                    msg_data = json.loads(message)
+                    if msg_data.get("type") == "response.function_call_arguments.done":
+                        await self._handle_function_call(msg_data, azure_ws)
+                except json.JSONDecodeError:
+                    pass
+                
                 await asyncio.get_event_loop().run_in_executor(
                     None,
                     client_ws.send,  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
@@ -266,6 +296,45 @@ class VoiceProxyHandler:
                 )
         except Exception:
             logger.debug("Client connection closed during forwarding")
+
+    async def _handle_function_call(
+        self,
+        msg_data: Dict[str, Any],
+        azure_ws: websockets.asyncio.client.ClientConnection,
+    ) -> None:
+        """Handle function calls from the agent."""
+        call_id = msg_data.get("call_id")
+        arguments_str = msg_data.get("arguments", "{}")
+        
+        try:
+            arguments = json.loads(arguments_str)
+            if msg_data.get("item_id"):
+                # Get the function name from the function call item
+                # For now, we'll assume it's the end_conversation function
+                function_name = END_CONVERSATION_FUNCTION_NAME
+                
+                if function_name == END_CONVERSATION_FUNCTION_NAME:
+                    reason = arguments.get("reason", "Conversation ended by agent")
+                    logger.info(f"Agent ending conversation: {reason}")
+                    
+                    # Send function call output back to Azure
+                    function_output = {
+                        "type": "conversation.item.create",
+                        "item": {
+                            "type": "function_call_output",
+                            "call_id": call_id,
+                            "output": json.dumps({
+                                "success": True,
+                                "message": f"Conversation ended professionally. Reason: {reason}"
+                            })
+                        }
+                    }
+                    await azure_ws.send(json.dumps(function_output))
+                    
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing function arguments: {e}")
+        except Exception as e:
+            logger.error(f"Error handling function call: {e}")
 
     async def _send_message(
         self, ws: simple_websocket.ws.Server, message: Dict[str, str | Dict[str, str]]

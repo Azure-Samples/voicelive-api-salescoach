@@ -11,11 +11,13 @@ interface RealtimeOptions {
   onMessage?: (msg: any) => void
   onAudioDelta?: (delta: string) => void
   onTranscript?: (role: 'user' | 'assistant', text: string) => void
+  onConversationEnded?: (reason: string) => void
 }
 
 export function useRealtime(options: RealtimeOptions) {
   const [connected, setConnected] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
+  const [conversationEnded, setConversationEnded] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const audioRecording = useRef<any[]>([])
   const conversationRecording = useRef<any[]>([])
@@ -86,6 +88,19 @@ export function useRealtime(options: RealtimeOptions) {
             options.onTranscript?.('assistant', msg.transcript)
           }
           break
+        case 'response.function_call_arguments.done':
+          if (msg.arguments) {
+            try {
+              const functionArgs = JSON.parse(msg.arguments)
+              if (functionArgs.reason) {
+                setConversationEnded(true)
+                options.onConversationEnded?.(functionArgs.reason)
+              }
+            } catch (e) {
+              console.error('Error parsing function arguments:', e)
+            }
+          }
+          break
       }
     }
 
@@ -101,6 +116,7 @@ export function useRealtime(options: RealtimeOptions) {
 
   const clearMessages = useCallback(() => {
     setMessages([])
+    setConversationEnded(false)
     conversationRecording.current = []
     audioRecording.current = []
   }, [])
@@ -121,6 +137,7 @@ export function useRealtime(options: RealtimeOptions) {
   return {
     connected,
     messages,
+    conversationEnded,
     send,
     clearMessages,
     getRecordings,
