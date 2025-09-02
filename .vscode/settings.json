@@ -11,7 +11,7 @@
     "editor.detectIndentation": true,
 
     // Controls whether the editor should automatically format the line after typing.
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
 
     // Python requires spaces instead of tabs.
     "editor.insertSpaces": true,
@@ -55,6 +55,11 @@
     // Controls whether the tree should render indent guides.
     "workbench.tree.renderIndentGuides": "always",
 
+    // Python linting parameters
+    "pylint.args": [
+        "--rcfile=backend/pyproject.toml"
+    ],
+
     // Automatically activate the Python environment in the terminal.
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
@@ -65,7 +70,7 @@
 
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.formatOnSave": true,
+        "editor.formatOnSave": false,
         "editor.codeActionsOnSave": {
             "source.organizeImports.ruff": "explicit",
             "source.fixAll.ruff": "explicit"
