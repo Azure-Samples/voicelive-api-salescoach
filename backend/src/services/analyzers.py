@@ -86,7 +86,7 @@ class ConversationAnalyzer:
         scenarios: Dict[str, Any] = {}
 
         if not self.scenario_dir.exists():
-            logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
+            logger.warning("Scenarios directory not found: %s", self.scenario_dir)
             return scenarios
 
         for file in self.scenario_dir.glob(EVALUATION_FILE_SUFFIX):
@@ -95,11 +95,11 @@ class ConversationAnalyzer:
                     scenario = yaml.safe_load(f)
                     scenario_id = file.stem.replace(EVALUATION_SUFFIX_REMOVAL, "")
                     scenarios[scenario_id] = scenario
-                    logger.info(f"Loaded evaluation scenario: {scenario_id}")
+                    logger.info("Loaded evaluation scenario: %s", scenario_id)
             except Exception as e:
-                logger.error(f"Error loading evaluation scenario {file}: {e}")
+                logger.error("Error loading evaluation scenario %s: %s", file, e)
 
-        logger.info(f"Total evaluation scenarios loaded: {len(scenarios)}")
+        logger.info("Total evaluation scenarios loaded: %s", len(scenarios))
         return scenarios
 
     def _initialize_openai_client(self) -> Optional[AzureOpenAI]:
@@ -123,11 +123,11 @@ class ConversationAnalyzer:
                 api_key=api_key,
             )
 
-            logger.info(f"ConversationAnalyzer initialized with endpoint: {endpoint}")
+            logger.info("ConversationAnalyzer initialized with endpoint: %s", endpoint)
             return client
 
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client: {e}")
+            logger.error("Failed to initialize OpenAI client: %s", e)
             return None
 
     async def analyze_conversation(
@@ -144,11 +144,11 @@ class ConversationAnalyzer:
         Returns:
             Optional[Dict[str, Any]]: Analysis results or None if analysis fails
         """
-        logger.info(f"Starting conversation analysis for scenario: {scenario_id}")
+        logger.info("Starting conversation analysis for scenario: %s", scenario_id)
 
         evaluation_scenario = self.evaluation_scenarios.get(scenario_id)
         if not evaluation_scenario:
-            logger.error(f"Evaluation scenario not found: {scenario_id}")
+            logger.error("Evaluation scenario not found: %s", scenario_id)
             return None
 
         if not self.openai_client:
@@ -228,7 +228,7 @@ class ConversationAnalyzer:
             return None
 
         except Exception as e:
-            logger.error(f"Error in evaluation model: {e}")
+            logger.error("Error in evaluation model: %s", e)
             return None
 
     def _build_evaluation_messages(
@@ -331,7 +331,7 @@ class ConversationAnalyzer:
         )
 
         logger.info(
-            f"Evaluation processed with score: {evaluation_json.get('overall_score')}"
+            "Evaluation processed with score: %s", evaluation_json.get('overall_score')
         )
         return evaluation_json
 
@@ -361,11 +361,11 @@ class PronunciationAssessor:
     ) -> None:
         """Log information about the assessment being performed."""
         logger.info(
-            f"Starting pronunciation assessment with audio size: {len(wav_audio)} bytes"
+            "Starting pronunciation assessment with audio size: %s bytes", len(wav_audio)
         )
-        logger.info(f"Reference text: {reference_text or 'None'}")
-        logger.info(f"Speech key configured: {'Yes' if self.speech_key else 'No'}")
-        logger.info(f"Speech region: {self.speech_region}")
+        logger.info("Reference text: %s", reference_text or 'None')
+        logger.info("Speech key configured: %s", 'Yes' if self.speech_key else 'No')
+        logger.info("Speech region: %s", self.speech_region)
 
     def _create_speech_config(self) -> speechsdk.SpeechConfig:
         """Create speech configuration."""
@@ -441,16 +441,16 @@ class PronunciationAssessor:
                 logger.error("No audio data to assess")
                 return None
 
-            logger.info(f"Combined audio size: {len(combined_audio)} bytes")
+            logger.info("Combined audio size: %s bytes", len(combined_audio))
 
             if len(combined_audio) < MIN_AUDIO_SIZE_BYTES:
-                logger.warning(f"Audio might be too short: {len(combined_audio)} bytes")
+                logger.warning("Audio might be too short: %s bytes", len(combined_audio))
 
             wav_audio = self._create_wav_audio(combined_audio)
             return await self._perform_assessment(wav_audio, reference_text)
 
         except Exception as e:
-            logger.error(f"Error in pronunciation assessment: {e}")
+            logger.error("Error in pronunciation assessment: %s", e)
             return None
 
     async def _prepare_audio_data(self, audio_data: List[Dict[str, Any]]) -> bytearray:
@@ -463,7 +463,7 @@ class PronunciationAssessor:
                     audio_bytes = base64.b64decode(chunk["data"])
                     combined_audio.extend(audio_bytes)
                 except Exception as e:
-                    logger.error(f"Error decoding audio chunk: {e}")
+                    logger.error("Error decoding audio chunk: %s", e)
 
         return combined_audio
 
@@ -520,5 +520,5 @@ class PronunciationAssessor:
 
             return words
         except Exception as e:
-            logger.error(f"Error extracting word details: {e}")
+            logger.error("Error extracting word details: %s", e)
             return []

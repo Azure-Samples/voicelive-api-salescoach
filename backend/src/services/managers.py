@@ -68,7 +68,7 @@ class ScenarioManager:
         scenarios: Dict[str, Any] = {}
 
         if not self.scenario_dir.exists():
-            logger.warning(f"Scenarios directory not found: {self.scenario_dir}")
+            logger.warning("Scenarios directory not found: %s", self.scenario_dir)
             return scenarios
 
         for file in self.scenario_dir.glob(f"*{ROLE_PLAY_FILE_SUFFIX}"):
@@ -76,9 +76,9 @@ class ScenarioManager:
             scenario = self._load_scenario_file(file)
             if scenario:
                 scenarios[scenario_id] = scenario
-                logger.info(f"Loaded scenario: {scenario_id}")
+                logger.info("Loaded scenario: %s", scenario_id)
 
-        logger.info(f"Total scenarios loaded: {len(scenarios)}")
+        logger.info("Total scenarios loaded: %s", len(scenarios))
         return scenarios
 
     def _extract_scenario_id(self, file: Path) -> str:
@@ -91,7 +91,7 @@ class ScenarioManager:
             with open(file) as f:
                 return yaml.safe_load(f)
         except Exception as e:
-            logger.error(f"Error loading scenario {file}: {e}")
+            logger.error("Error loading scenario %s: %s", file, e)
             return None
 
     def get_scenario(self, scenario_id: str) -> Optional[Dict[str, Any]]:
@@ -203,11 +203,11 @@ CRITICAL INTERACTION GUIDELINES:
                 credential=self.credential,
             )
             logger.info(
-                f"AI Project client initialized with endpoint: {project_endpoint}"
+                "AI Project client initialized with endpoint: %s", project_endpoint
             )
             return client
         except Exception as e:
-            logger.error(f"Failed to initialize AI Project client: {e}")
+            logger.error("Failed to initialize AI Project client: %s", e)
             return None
 
     def create_agent(self, scenario_id: str, scenario_data: Dict[str, Any]) -> str:
@@ -270,7 +270,7 @@ CRITICAL INTERACTION GUIDELINES:
                 )
 
                 agent_id = agent.id
-                logger.info(f"Created Azure AI agent: {agent_id}")
+                logger.info("Created Azure AI agent: %s", agent_id)
 
                 self.agents[agent_id] = self._create_agent_config(
                     scenario_id=scenario_id,
@@ -285,7 +285,7 @@ CRITICAL INTERACTION GUIDELINES:
                 return agent_id
 
         except Exception as e:
-            logger.error(f"Error creating Azure agent: {e}")
+            logger.error("Error creating Azure agent: %s", e)
             raise
 
     def _create_local_agent(
@@ -310,11 +310,11 @@ CRITICAL INTERACTION GUIDELINES:
                 max_tokens=max_tokens,
             )
 
-            logger.info(f"Created local agent configuration: {agent_id}")
+            logger.info("Created local agent configuration: %s", agent_id)
             return agent_id
 
         except Exception as e:
-            logger.error(f"Error creating local agent: {e}")
+            logger.error("Error creating local agent: %s", e)
             raise
 
     def _generate_agent_name(self, scenario_id: str) -> str:
@@ -380,11 +380,11 @@ CRITICAL INTERACTION GUIDELINES:
                     try:
                         with self.project_client:
                             self.project_client.agents.delete_agent(agent_id)
-                            logger.info(f"Deleted Azure AI agent: {agent_id}")
+                            logger.info("Deleted Azure AI agent: %s", agent_id)
                     except Exception as e:
-                        logger.error(f"Error deleting Azure agent: {e}")
+                        logger.error("Error deleting Azure agent: %s", e)
 
                 del self.agents[agent_id]
-                logger.info(f"Deleted agent from local storage: {agent_id}")
+                logger.info("Deleted agent from local storage: %s", agent_id)
         except Exception as e:
-            logger.error(f"Error deleting agent {agent_id}: {e}")
+            logger.error("Error deleting agent %s: %s", agent_id, e)

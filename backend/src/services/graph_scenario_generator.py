@@ -38,7 +38,7 @@ class GraphScenarioGenerator:
                 api_key=api_key,
             )
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client for scenarios: {e}")
+            logger.error("Failed to initialize OpenAI client for scenarios: %s", e)
             return None
 
     def generate_scenario_from_graph(

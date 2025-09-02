@@ -83,7 +83,7 @@ class VoiceProxyHandler:
             await self._handle_message_forwarding(client_ws, azure_ws)
 
         except Exception as e:
-            logger.error(f"Proxy error: {e}")
+            logger.error("Proxy error: %s", e)
             await self._send_error(client_ws, str(e))
 
         finally:
@@ -105,7 +105,7 @@ class VoiceProxyHandler:
                 if msg.get("type") == "session.update":
                     return msg.get("session", {}).get("agent_id")
         except Exception as e:
-            logger.error(f"Error getting agent ID: {e}")
+            logger.error("Error getting agent ID: %s", e)
             return None
 
     async def _connect_to_azure(
@@ -126,7 +126,7 @@ class VoiceProxyHandler:
 
             azure_ws = await websockets.connect(azure_url, additional_headers=headers)
             logger.info(
-                f"Connected to Azure Voice API with agent: {agent_id or 'default'}"
+                "Connected to Azure Voice API with agent: %s", agent_id or 'default'
             )
 
             await self._send_initial_config(azure_ws, agent_config)
@@ -134,7 +134,7 @@ class VoiceProxyHandler:
             return azure_ws
 
         except Exception as e:
-            logger.error(f"Failed to connect to Azure: {e}")
+            logger.error("Failed to connect to Azure: %s", e)
             return None
 
     def _build_azure_url(
@@ -245,7 +245,7 @@ class VoiceProxyHandler:
                 )
                 if message is None:
                     break
-                logger.debug(f"Client->Azure: {message[:LOG_MESSAGE_MAX_LENGTH]}")
+                logger.debug("Client->Azure: %s", message[:LOG_MESSAGE_MAX_LENGTH])
                 await azure_ws.send(message)
         except Exception:
             logger.debug("Client connection closed during forwarding")
@@ -258,7 +258,7 @@ class VoiceProxyHandler:
         """Forward messages from Azure to client."""
         try:
             async for message in azure_ws:
-                logger.debug(f"Azure->Client: {message[:LOG_MESSAGE_MAX_LENGTH]}")
+                logger.debug("Azure->Client: %s", message[:LOG_MESSAGE_MAX_LENGTH])
                 await asyncio.get_event_loop().run_in_executor(
                     None,
                     client_ws.send,  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
@@ -283,11 +283,6 @@ class VoiceProxyHandler:
     async def _send_error(
         self, ws: simple_websocket.ws.Server, error_message: str
     ) -> None:
-        """Send an error message to a WebSocket."""
-
-        await self._send_message(
-            ws, {"type": "error", "error": {"message": error_message}}
-        )
         """Send an error message to a WebSocket."""
         await self._send_message(
             ws, {"type": "error", "error": {"message": error_message}}

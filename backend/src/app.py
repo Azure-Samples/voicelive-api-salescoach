@@ -106,9 +106,12 @@ def create_agent():
     scenario = scenario_manager.get_scenario(scenario_id)
     if not scenario:
         logger.error(
-            f"Scenario not found: {scenario_id}. "
-            f"Available scenarios: {list(scenario_manager.scenarios.keys())} + "
-            f"generated: {list(scenario_manager.generated_scenarios.keys())}"
+            "Scenario not found: %s. "
+            "Available scenarios: %s + "
+            "generated: %s",
+            scenario_id,
+            list(scenario_manager.scenarios.keys()),
+            list(scenario_manager.generated_scenarios.keys())
         )
         return jsonify({"error": SCENARIO_NOT_FOUND}), HTTP_NOT_FOUND
 
@@ -116,7 +119,7 @@ def create_agent():
         agent_id = agent_manager.create_agent(scenario_id, scenario)
         return jsonify({"agent_id": agent_id, "scenario_id": scenario_id})
     except Exception as e:
-        logger.error(f"Failed to create agent: {e}")
+        logger.error("Failed to create agent: %s", e)
         return jsonify({"error": str(e)}), HTTP_INTERNAL_SERVER_ERROR
 
 
@@ -127,7 +130,7 @@ def delete_agent(agent_id: str):
         agent_manager.delete_agent(agent_id)
         return jsonify({"success": True})
     except Exception as e:
-        logger.error(f"Failed to delete agent: {e}")
+        logger.error("Failed to delete agent: %s", e)
         return jsonify({"error": str(e)}), HTTP_INTERNAL_SERVER_ERROR
 
 
@@ -153,9 +156,12 @@ def analyze_conversation():
 def _log_analyze_request(scenario_id: str, transcript: str, reference_text: str):
     """Log information about the analyze request."""
     logger.info(
-        f"Analyze request - scenario: {scenario_id}, "
-        f"transcript length: {len(transcript or '')}, "
-        f"reference_text length: {len(reference_text or '')}"
+        "Analyze request - scenario: %s, "
+        "transcript length: %s, "
+        "reference_text length: %s",
+        scenario_id,
+        len(transcript or ''),
+        len(reference_text or '')
     )
 
 
@@ -182,11 +188,11 @@ def _perform_conversation_analysis(
         ai_assessment, pronunciation = results
 
         if isinstance(ai_assessment, Exception):
-            logger.error(f"AI assessment failed: {ai_assessment}")
+            logger.error("AI assessment failed: %s", ai_assessment)
             ai_assessment = None
 
         if isinstance(pronunciation, Exception):
-            logger.error(f"Pronunciation assessment failed: {pronunciation}")
+            logger.error("Pronunciation assessment failed: %s", pronunciation)
             pronunciation = None
 
         return jsonify(
@@ -236,7 +242,7 @@ def generate_graph_scenario():
         )
 
         if not canned_file.exists():
-            logger.error(f"Canned Graph API file not found at {canned_file}")
+            logger.error("Canned Graph API file not found at %s", canned_file)
             graph_data: Dict[str, Any] = {"value": []}
         else:
             with open(canned_file) as f:
@@ -246,7 +252,7 @@ def generate_graph_scenario():
 
         return jsonify(scenario)
     except Exception as e:
-        logger.error(f"Failed to generate Graph scenario: {e}")
+        logger.error("Failed to generate Graph scenario: %s", e)
         return jsonify({"error": str(e)}), HTTP_INTERNAL_SERVER_ERROR
 
 
