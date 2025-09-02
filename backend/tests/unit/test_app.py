@@ -226,20 +226,20 @@ class TestFlaskApp:
     def test_perform_conversation_analysis_success(self):
         """Test the _perform_conversation_analysis function exists and can be imported."""
         # This is a complex async function, so we just test it can be imported
-        from src.app import _perform_conversation_analysis
+        from src.app import _perform_conversation_analysis  # pylint: disable=C0415
 
         assert callable(_perform_conversation_analysis)
 
     def test_perform_conversation_analysis_with_exceptions(self):
         """Test _perform_conversation_analysis function exists."""
         # This is a complex async function, so we just test it can be imported
-        from src.app import _perform_conversation_analysis
+        from src.app import _perform_conversation_analysis  # pylint: disable=C0415
 
         assert callable(_perform_conversation_analysis)
 
     def test_log_analyze_request(self):
         """Test the _log_analyze_request function."""
-        from src.app import _log_analyze_request
+        from src.app import _log_analyze_request  # pylint: disable=C0415
 
         # Test with valid input
         with patch("app.logger") as mock_logger:

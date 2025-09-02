@@ -6,8 +6,12 @@
 """Flask application for the upskilling agent."""
 
 import asyncio
+import json
 import logging
 import os
+from pathlib import Path
+import time
+
 from typing import Any, Dict, List, cast
 from flask import Flask, jsonify, request, send_from_directory
 from flask_sock import Sock  # pyright: ignore[reportMissingTypeStubs]
@@ -63,7 +67,7 @@ def index():
     """Serve the main application page."""
     if app.static_folder is None:
         logger.error("STATIC_FOLDER is not set. Cannot serve index.html.")
-        import sys
+        import sys  # pylint: disable=C0415
 
         sys.exit(1)
     return send_from_directory(app.static_folder, INDEX_FILE)
@@ -217,9 +221,6 @@ def voice_proxy(ws: simple_websocket.ws.Server):
 @app.route(API_GRAPH_SCENARIO_ENDPOINT, methods=["POST"])
 def generate_graph_scenario():
     """Generate a scenario based on Graph API data."""
-    import time
-    import json
-    from pathlib import Path
 
     # Simulate API delay
     time.sleep(2)
