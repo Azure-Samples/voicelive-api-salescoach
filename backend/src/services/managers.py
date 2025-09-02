@@ -238,10 +238,9 @@ CRITICAL INTERACTION GUIDELINES:
             return self._create_azure_agent(
                 scenario_id, combined_instructions, model_name, temperature, max_tokens
             )
-        else:
-            return self._create_local_agent(
-                scenario_id, combined_instructions, model_name, temperature, max_tokens
-            )
+        return self._create_local_agent(
+            scenario_id, combined_instructions, model_name, temperature, max_tokens
+        )
 
     def _create_azure_agent(
         self,

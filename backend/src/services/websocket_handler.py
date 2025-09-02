@@ -145,11 +145,10 @@ class VoiceProxyHandler:
 
         if agent_config:
             return self._build_agent_specific_url(base_url, agent_id, agent_config)
-        elif config["agent_id"]:
+        if config["agent_id"]:
             return f"{base_url}&agent-id={config['agent_id']}"
-        else:
-            model_name = config["model_deployment_name"]
-            return f"{base_url}&model={model_name}"
+        model_name = config["model_deployment_name"]
+        return f"{base_url}&model={model_name}"
 
     def _build_base_azure_url(self) -> str:
         """Build the base Azure WebSocket URL."""
@@ -170,9 +169,8 @@ class VoiceProxyHandler:
         """Build URL for specific agent configuration."""
         if agent_config.get("is_azure_agent"):
             return f"{base_url}&agent-id={agent_id}"
-        else:
-            model_name = agent_config.get("model", config["model_deployment_name"])
-            return f"{base_url}&model={model_name}"
+        model_name = agent_config.get("model", config["model_deployment_name"])
+        return f"{base_url}&model={model_name}"
 
     async def _send_initial_config(
         self,
