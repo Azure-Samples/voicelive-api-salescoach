@@ -1,13 +1,14 @@
 """Tests for the managers module."""
 
 import tempfile
-from typing import Optional
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
+from unittest.mock import MagicMock, Mock, patch
+
 import yaml
 
-from src.services.managers import ScenarioManager, AgentManager
+from src.services.managers import AgentManager, ScenarioManager
 
 
 class TestScenarioManager:
@@ -122,10 +123,9 @@ class TestAgentManager:
         assert manager.BASE_INSTRUCTIONS in manager.agents[agent_id]["instructions"]
 
     @patch("services.managers.config")
-    @patch("services.managers.DefaultAzureCredential")
     @patch("services.managers.AIProjectClient")
     def test_create_agent_success_azure(
-        self, mock_ai_client, mock_credential, mock_config
+        self, mock_ai_client, mock_config
     ):
         """Test successful Azure agent creation."""
         # Mock configuration
@@ -218,9 +218,8 @@ class TestAgentManager:
         assert "test-agent" not in manager.agents
 
     @patch("services.managers.config")
-    @patch("services.managers.DefaultAzureCredential")
     @patch("services.managers.AIProjectClient")
-    def test_delete_agent_azure(self, mock_ai_client, mock_credential, mock_config):
+    def test_delete_agent_azure(self, mock_ai_client, mock_config):
         """Test Azure agent deletion."""
         # Mock configuration
         mock_config.__getitem__.side_effect = lambda key: {
