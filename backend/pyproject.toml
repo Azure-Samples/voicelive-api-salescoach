@@ -25,7 +25,7 @@ indent-string = "    "
 max-line-length = 120
 
 [tool.pylint.MASTER]
-disable = ["broad-exception-caught"]
+disable = ["broad-exception-caught", "too-few-public-methods"]
 ignore = [".venv"]
 
 # Add this section to disable W0212 for test files
@@ -44,7 +44,8 @@ line-length = 120
 
 # Add any ignored rules (e.g., if you want to skip specific linter checks)
 lint.ignore = [
-  "BLE001", # Do not catch blind exception: `Exception` (equivalent to pylint's broad-exception-caught)
+  "BLE001",  # Do not catch blind exception: `Exception` (equivalent to pylint's broad-exception-caught)
+  "PLR0903", # Too few public methods (equivalent to pylint's too-few-public-methods)
 ]
 
 # Add per-file ignores for Ruff (SLF001 is equivalent to pylint's W0212)
