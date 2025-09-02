@@ -1,6 +1,7 @@
 """Tests for the managers module."""
 
 import tempfile
+from typing import Optional
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 from pathlib import Path
@@ -74,6 +75,10 @@ class TestScenarioManager:
 
 class TestAgentManager:
     """Test cases for AgentManager."""
+
+    def __init__(self):
+        """Initialize the test class."""
+        self.agent_manager: Optional[AgentManager] = None
 
     def setup_method(self):
         """Set up test fixtures."""

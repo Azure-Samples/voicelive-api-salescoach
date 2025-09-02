@@ -1,15 +1,21 @@
 """Tests for the Flask application endpoints."""
 
 import json
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
+from flask.testing import FlaskClient
 
 from src.app import app
 
 
 class TestFlaskApp:
     """Test cases for Flask application endpoints."""
+
+    def __init__(self):
+        """Initialize the test class."""
+        self.client: Optional[FlaskClient] = None
 
     def setup_method(self):
         """Set up test fixtures."""
