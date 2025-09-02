@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 import pytest
 import yaml
 
-from services.analyzers import ConversationAnalyzer, PronunciationAssessor
+from src.services.analyzers import ConversationAnalyzer, PronunciationAssessor
 
 
 class TestConversationAnalyzer:

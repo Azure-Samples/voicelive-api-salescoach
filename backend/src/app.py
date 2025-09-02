@@ -13,10 +13,10 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_sock import Sock  # pyright: ignore[reportMissingTypeStubs]
 import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 
-from config import config
-from services.managers import ScenarioManager, AgentManager
-from services.analyzers import ConversationAnalyzer, PronunciationAssessor
-from services.websocket_handler import VoiceProxyHandler
+from src.config import config
+from src.services.managers import ScenarioManager, AgentManager
+from src.services.analyzers import ConversationAnalyzer, PronunciationAssessor
+from src.services.websocket_handler import VoiceProxyHandler
 
 # Constants
 STATIC_FOLDER = "../static"

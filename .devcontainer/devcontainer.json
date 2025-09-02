@@ -23,10 +23,27 @@
                 "tamasfe.even-better-toml"
             ],
             "settings": {
-                "python.analysis.typeCheckingMode": "strict"
-            }
+                "python.analysis.extraPaths": [
+                    "${workspaceFolder}/backend"
+                ],
+                "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+                "python.pythonPath": "${workspaceFolder}/backend/.venv/bin/python",
+                "python.venvPath": "${workspaceFolder}/backend/.venv",
+                "python.envFile": "${workspaceFolder}/backend/.env",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "bash",
+                        "args": [ "-c", "source ${workspaceFolder}/backend/.venv/bin/activate && bash" ]
+                    }
+                }
+            },
+            "terminal.integrated.defaultProfile.linux": "bash"
         }
     },
+    "containerEnv": {
+        "PYTHONPATH": "${containerWorkspaceFolder}/backend"
+    },
+
     "remoteUser": "vscode",
     "postCreateCommand": "chmod +x ./.devcontainer/setup.sh && ./.devcontainer/setup.sh && chmod +x ./cleanall.sh"
 }

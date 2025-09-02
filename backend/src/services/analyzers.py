@@ -18,7 +18,7 @@ import azure.cognitiveservices.speech as speechsdk  # pyright: ignore[reportMiss
 import yaml
 from openai import AzureOpenAI
 
-from config import config
+from src.config import config
 
 logger = logging.getLogger(__name__)
 

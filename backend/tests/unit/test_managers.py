@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 import yaml
 
-from services.managers import ScenarioManager, AgentManager
+from src.services.managers import ScenarioManager, AgentManager
 
 
 class TestScenarioManager:

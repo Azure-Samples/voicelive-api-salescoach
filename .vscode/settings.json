@@ -55,14 +55,13 @@
     // Controls whether the tree should render indent guides.
     "workbench.tree.renderIndentGuides": "always",
 
-    // Python linting parameters
-    "pylint.args": [
-        "--rcfile=src/backend/.pylintrc"
-    ],
-
     // Automatically activate the Python environment in the terminal.
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
+    "terminal.integrated.defaultProfile.linux": "bash",
+
+    // Strict Python type checking
+    "python.analysis.typeCheckingMode": "strict",
 
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
@@ -78,5 +77,5 @@
     "python.testing.unittestEnabled": false,
     "python.experiments.optOutFrom": [
         "pythonTerminalEnvVarActivation"
-    ],
+    ]
 }

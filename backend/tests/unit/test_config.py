@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch
 
-from config import Config
+from src.config import Config
 
 
 class TestConfig:

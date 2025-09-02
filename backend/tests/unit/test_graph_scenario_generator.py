@@ -2,7 +2,7 @@
 
 from unittest.mock import Mock, patch
 
-from services.graph_scenario_generator import GraphScenarioGenerator
+from src.services.graph_scenario_generator import GraphScenarioGenerator
 
 
 class TestGraphScenarioGenerator:

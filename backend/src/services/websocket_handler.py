@@ -15,8 +15,8 @@ import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 import websockets
 import websockets.asyncio.client
 
-from config import config
-from services.managers import AgentManager
+from src.config import config
+from src.services.managers import AgentManager
 
 logger = logging.getLogger(__name__)
 
