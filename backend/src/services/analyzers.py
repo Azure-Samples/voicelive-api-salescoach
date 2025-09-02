@@ -347,7 +347,8 @@ class PronunciationAssessor:
     def _create_wav_audio(self, audio_bytes: bytearray) -> bytes:
         """Create WAV format audio from raw PCM bytes."""
         with io.BytesIO() as wav_buffer:
-            with wave.open(wav_buffer, "wb") as wav_file:
+            wav_file: wave.Wave_write = wave.open(wav_buffer, "wb")  # type: ignore
+            with wav_file:
                 wav_file.setnchannels(AUDIO_CHANNELS)
                 wav_file.setsampwidth(AUDIO_SAMPLE_WIDTH)
                 wav_file.setframerate(AUDIO_SAMPLE_RATE)
