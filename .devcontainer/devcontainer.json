@@ -37,8 +37,7 @@
                         "args": [ "-c", "source ${containerWorkspaceFolder}/backend/.venv/bin/activate && bash" ]
                     }
                 }
-            },
-            "terminal.integrated.defaultProfile.linux": "bash"
+            }
         }
     },
     "containerEnv": {
