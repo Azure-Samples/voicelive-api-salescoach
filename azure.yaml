@@ -5,8 +5,16 @@ infra:
   provider: bicep
   path: infra
   module: main
-
+services:
+  voicelab:
+    project: backend
+    host: containerapp
+    language: python
+    docker:
+      path: Dockerfile
+      context: ../
 resources:
-  voicelab-sales-training:
+  voicelab:
     type: host.containerapp
     port: 8000
+
