@@ -32,14 +32,15 @@
                 "python.pythonPath": "${containerWorkspaceFolder}/backend/.venv/bin/python",
                 "python.venvPath": "${containerWorkspaceFolder}/backend/.venv",
                 "python.envFile": "${containerWorkspaceFolder}/backend/.env",
+                "terminal.integrated.cwd": "${containerWorkspaceFolder}/backend/",
+                "terminal.integrated.inheritEnv": true,
                 "terminal.integrated.profiles.linux": {
                     "bash": {
                         "path": "bash",
                         "args": [ "-c", "source ${containerWorkspaceFolder}/backend/.venv/bin/activate && bash" ]
                     }
                 }
-            },
-            "terminal.integrated.defaultProfile.linux": "bash"
+            }
         }
     },
     "containerEnv": {
