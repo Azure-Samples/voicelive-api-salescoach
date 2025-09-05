@@ -61,7 +61,7 @@ https://github.com/user-attachments/assets/904f1555-6981-4780-ae64-c5757337bcad
    - Value proposition delivery
    - Objection handling skills
 
-## Getting Started 
+## Getting Started
 
 ### Deploy to Azure
 
@@ -80,11 +80,15 @@ This project includes a dev container for easy setup and a build script for  dev
    - Open in VS Code and select "Reopen in Container" when prompted
    - All dependencies and tools are pre-configured
 
-2. **Build and run**
+2. **Fill in the .env file**
+   - Copy `.env.template` to `.env`
+   - Fill in your Azure AI Foundry and Speech service keys and endpoints (you can run `azd provision` to create these resources if you haven't already)
+
+3. **Build and run**
    ```bash
    # Build the application
    ./scripts/build.sh
-   
+
    # Start the server
    cd backend && python src/app.py
    ```
@@ -146,8 +150,8 @@ If you believe you have found a security vulnerability in any Microsoft-owned re
 
 ## Trademarks
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
