@@ -6,6 +6,8 @@ param tags object = {}
 
 param voicelabExists bool
 
+param useFoundryAgents bool
+
 @description('Id of the user or app to assign application roles')
 param principalId string
 
@@ -228,7 +230,7 @@ module voicelab 'br/public:avm/res/app/container-app:0.8.0' = {
           }
           {
             name: 'USE_AZURE_AI_AGENTS'
-            value: 'false'
+            value: useFoundryAgents ? 'true' : 'false'
           }
           {
             name: 'PORT'

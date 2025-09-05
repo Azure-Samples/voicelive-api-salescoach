@@ -16,6 +16,9 @@
       },
       "principalType": {
         "value": "${AZURE_PRINCIPAL_TYPE}"
+      },
+      "useFoundryAgents": {
+        "value": false
       }
     }
 }

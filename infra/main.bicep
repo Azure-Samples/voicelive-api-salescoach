@@ -18,6 +18,8 @@ param principalId string
 @description('Principal type of user or app')
 param principalType string
 
+param useFoundryAgents bool = false
+
 // Tags that should be applied to all resources.
 //
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
@@ -43,6 +45,7 @@ module resources 'resources.bicep' = {
     principalId: principalId
     principalType: principalType
     voicelabExists: voicelabExists
+    useFoundryAgents: useFoundryAgents
   }
 }
 
