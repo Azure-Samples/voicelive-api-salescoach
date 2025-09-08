@@ -13,9 +13,9 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, cast
 
-import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
+import simple_websocket.ws  # type: ignore
 from flask import Flask, jsonify, request, send_from_directory, Response
-from flask_sock import Sock  # pyright: ignore[reportMissingTypeStubs]
+from flask_sock import Sock  # type: ignore
 
 from src.config import config
 from src.services.analyzers import ConversationAnalyzer, PronunciationAssessor
@@ -199,7 +199,7 @@ def audio_processor() -> Response | tuple[Response, int]:
     return send_from_directory("static", AUDIO_PROCESSOR_FILE)
 
 
-@sock.route(WEBSOCKET_ENDPOINT)  # pyright: ignore[reportUnknownMemberType]
+@sock.route(WEBSOCKET_ENDPOINT)  # type: ignore
 def voice_proxy(ws: simple_websocket.ws.Server) -> None:
     """WebSocket endpoint for voice proxy."""
 
