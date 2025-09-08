@@ -86,7 +86,7 @@ def get_scenarios() -> Response:
 
 
 @app.route(f"{API_SCENARIOS_ENDPOINT}/<scenario_id>")
-def get_scenario(scenario_id: str) -> Response:
+def get_scenario(scenario_id: str) -> Response | tuple[Response, int]:
     """Get a specific scenario by ID."""
     scenario = scenario_manager.get_scenario(scenario_id)
     if scenario:
@@ -95,7 +95,7 @@ def get_scenario(scenario_id: str) -> Response:
 
 
 @app.route(API_AGENTS_CREATE_ENDPOINT, methods=["POST"])
-def create_agent() -> Response:
+def create_agent() -> Response | tuple[Response, int]:
     """Create a new agent for a scenario."""
     data = cast(Dict[str, Any], request.json)
     scenario_id = data.get("scenario_id")
@@ -122,7 +122,7 @@ def create_agent() -> Response:
 
 
 @app.route("/api/agents/<agent_id>", methods=["DELETE"])
-def delete_agent(agent_id: str) -> Response:
+def delete_agent(agent_id: str) -> Response | tuple[Response, int]:
     """Delete an agent."""
     try:
         agent_manager.delete_agent(agent_id)
@@ -133,7 +133,7 @@ def delete_agent(agent_id: str) -> Response:
 
 
 @app.route(API_ANALYZE_ENDPOINT, methods=["POST"])
-def analyze_conversation() -> Response:
+def analyze_conversation() -> Response | tuple[Response, int]:
     """Analyze a conversation for performance assessment."""
     data = cast(Dict[str, Any], request.json)
     scenario_id = cast(str, data.get("scenario_id"))
@@ -163,8 +163,8 @@ def _perform_conversation_analysis(
     scenario_id: str,
     transcript: str,
     audio_data: List[Dict[str, Any]],
-    reference_text: str,
-) -> Response:
+    reference_text: str
+) -> Response | tuple[Response, int]:
     """Perform the actual conversation analysis."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -194,7 +194,7 @@ def _perform_conversation_analysis(
 
 
 @app.route(f"/{AUDIO_PROCESSOR_FILE}")
-def audio_processor() -> Response:
+def audio_processor() -> Response | tuple[Response, int]:
     """Serve the audio processor JavaScript file."""
     return send_from_directory("static", AUDIO_PROCESSOR_FILE)
 
@@ -215,7 +215,7 @@ def voice_proxy(ws: simple_websocket.ws.Server) -> None:
 
 
 @app.route(API_GRAPH_SCENARIO_ENDPOINT, methods=["POST"])
-def generate_graph_scenario() -> Response:
+def generate_graph_scenario() -> Response | tuple[Response, int]:
     """Generate a scenario based on Graph API data."""
 
     # Simulate API delay
