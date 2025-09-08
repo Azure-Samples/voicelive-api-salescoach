@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, cast
 
 import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, Response
 from flask_sock import Sock  # pyright: ignore[reportMissingTypeStubs]
 
 from src.config import config
@@ -63,7 +63,7 @@ voice_proxy_handler = VoiceProxyHandler(agent_manager)
 
 
 @app.route("/")
-def index():
+def index() -> Response:
     """Serve the main application page."""
     if app.static_folder is None:
         logger.error("STATIC_FOLDER is not set. Cannot serve index.html.")
@@ -74,19 +74,19 @@ def index():
 
 
 @app.route(API_CONFIG_ENDPOINT)
-def get_config():
+def get_config() -> Response:
     """Get client configuration."""
     return jsonify({"proxy_enabled": True, "ws_endpoint": WEBSOCKET_ENDPOINT})
 
 
 @app.route(API_SCENARIOS_ENDPOINT)
-def get_scenarios():
+def get_scenarios() -> Response:
     """Get list of available scenarios."""
     return jsonify(scenario_manager.list_scenarios())
 
 
 @app.route(f"{API_SCENARIOS_ENDPOINT}/<scenario_id>")
-def get_scenario(scenario_id: str):
+def get_scenario(scenario_id: str) -> Response:
     """Get a specific scenario by ID."""
     scenario = scenario_manager.get_scenario(scenario_id)
     if scenario:
@@ -95,7 +95,7 @@ def get_scenario(scenario_id: str):
 
 
 @app.route(API_AGENTS_CREATE_ENDPOINT, methods=["POST"])
-def create_agent():
+def create_agent() -> Response:
     """Create a new agent for a scenario."""
     data = cast(Dict[str, Any], request.json)
     scenario_id = data.get("scenario_id")
@@ -122,7 +122,7 @@ def create_agent():
 
 
 @app.route("/api/agents/<agent_id>", methods=["DELETE"])
-def delete_agent(agent_id: str):
+def delete_agent(agent_id: str) -> Response:
     """Delete an agent."""
     try:
         agent_manager.delete_agent(agent_id)
@@ -133,7 +133,7 @@ def delete_agent(agent_id: str):
 
 
 @app.route(API_ANALYZE_ENDPOINT, methods=["POST"])
-def analyze_conversation():
+def analyze_conversation() -> Response:
     """Analyze a conversation for performance assessment."""
     data = cast(Dict[str, Any], request.json)
     scenario_id = cast(str, data.get("scenario_id"))
@@ -149,7 +149,7 @@ def analyze_conversation():
     return _perform_conversation_analysis(scenario_id, transcript, audio_data, reference_text)
 
 
-def _log_analyze_request(scenario_id: str, transcript: str, reference_text: str):
+def _log_analyze_request(scenario_id: str, transcript: str, reference_text: str) -> None:
     """Log information about the analyze request."""
     logger.info(
         "Analyze request - scenario: %s, transcript length: %s, reference_text length: %s",
@@ -164,7 +164,7 @@ def _perform_conversation_analysis(
     transcript: str,
     audio_data: List[Dict[str, Any]],
     reference_text: str,
-):
+) -> Response:
     """Perform the actual conversation analysis."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -194,13 +194,13 @@ def _perform_conversation_analysis(
 
 
 @app.route(f"/{AUDIO_PROCESSOR_FILE}")
-def audio_processor():
+def audio_processor() -> Response:
     """Serve the audio processor JavaScript file."""
     return send_from_directory("static", AUDIO_PROCESSOR_FILE)
 
 
 @sock.route(WEBSOCKET_ENDPOINT)  # pyright: ignore[reportUnknownMemberType]
-def voice_proxy(ws: simple_websocket.ws.Server):
+def voice_proxy(ws: simple_websocket.ws.Server) -> None:
     """WebSocket endpoint for voice proxy."""
 
     logger.info("New WebSocket connection")
@@ -215,7 +215,7 @@ def voice_proxy(ws: simple_websocket.ws.Server):
 
 
 @app.route(API_GRAPH_SCENARIO_ENDPOINT, methods=["POST"])
-def generate_graph_scenario():
+def generate_graph_scenario() -> Response:
     """Generate a scenario based on Graph API data."""
 
     # Simulate API delay
@@ -242,7 +242,7 @@ def generate_graph_scenario():
         return jsonify({"error": str(e)}), HTTP_INTERNAL_SERVER_ERROR
 
 
-def main():
+def main() -> None:
     """Run the Flask application."""
     host = config["host"]
     port = config["port"]
