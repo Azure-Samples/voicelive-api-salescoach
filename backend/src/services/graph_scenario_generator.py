@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class GraphScenarioGenerator:
     """Generates training scenarios based on Microsoft Graph API data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Graph scenario generator."""
         self.openai_client = self._initialize_openai_client()
 
