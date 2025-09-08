@@ -39,7 +39,7 @@ jobs:
       working-directory: ./backend
       run: |
         echo "Running pylint in strict mode..."
-        pylint . --pyproject pyproject.toml
+        pylint .
 
     - name: Lint Python code with ruff
       working-directory: ./backend
