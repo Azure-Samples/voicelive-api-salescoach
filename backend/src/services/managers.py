@@ -9,7 +9,7 @@ import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import yaml
 from azure.ai.projects import AIProjectClient
@@ -78,7 +78,11 @@ class ScenarioManager:
         """Load a single scenario file."""
         try:
             with open(file, encoding="utf-8") as f:
-                return yaml.safe_load(f)
+                scenario = yaml.safe_load(f)
+                if isinstance(scenario, dict):
+                    return cast(Dict[str, Any], scenario)
+                logger.error("Scenario file %s does not contain a valid dictionary", file)
+                return None
         except Exception as e:
             logger.error("Error loading scenario %s: %s", file, e)
             return None
@@ -94,6 +98,11 @@ class ScenarioManager:
             Optional[Dict[str, Any]]: Scenario data or None if not found
         """
         scenario = self.scenarios.get(scenario_id)
+        if scenario:
+            if isinstance(scenario, dict):
+                return cast(Dict[str, Any], scenario)
+            logger.error("Scenario does not contain a valid dictionary")
+            return None
         if scenario:
             return scenario
 
@@ -160,7 +169,7 @@ CRITICAL INTERACTION GUIDELINES:
 - Avoid overly formal or robotic language - speak like a real business professional would
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the agent manager."""
         self.agents: Dict[str, Dict[str, Any]] = {}
         self.credential = DefaultAzureCredential()

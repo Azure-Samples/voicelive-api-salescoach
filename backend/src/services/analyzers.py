@@ -318,7 +318,7 @@ class ConversationAnalyzer:
 class PronunciationAssessor:
     """Assesses pronunciation using Azure Speech Services."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the pronunciation assessor."""
         self.speech_key = config["azure_speech_key"]
         self.speech_region = config["azure_speech_region"]
