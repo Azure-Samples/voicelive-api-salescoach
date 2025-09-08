@@ -9,7 +9,7 @@ on:
 jobs:
   python-test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         python-version: ['3.11', '3.12']
@@ -35,6 +35,24 @@ jobs:
         echo "Running flake8..."
         flake8 . --config=.flake8
 
+    - name: Lint Python code with pylint (strict mode)
+      working-directory: ./backend
+      run: |
+        echo "Running pylint in strict mode..."
+        pylint .
+
+    - name: Type check Python code with mypy (strict mode)
+      working-directory: ./backend
+      run: |
+        echo "Running mypy in strict mode..."
+        mypy src --config-file pyproject.toml
+
+    - name: Lint Python code with ruff
+      working-directory: ./backend
+      run: |
+        echo "Running ruff..."
+        ruff check . --config pyproject.toml
+
     - name: Check Python code formatting
       working-directory: ./backend
       run: |
@@ -50,7 +68,7 @@ jobs:
 
   frontend-test:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [20, 22]

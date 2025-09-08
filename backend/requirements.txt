@@ -3,7 +3,7 @@ azure-cognitiveservices-speech==1.45.0
 azure-identity>=1.15.0
 flask==3.1.2
 flask-sock==0.7.0
-openai==1.102.0
+openai==1.106.1
 python-dotenv==1.1.1
 pyyaml==6.0.2
 websockets==15.0.1

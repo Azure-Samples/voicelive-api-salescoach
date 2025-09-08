@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -rf .pytest_cache
 rm -rf backend/.venv
 rm -rf backend/src/__pycache__
 rm -rf backend/src/services/__pycache__

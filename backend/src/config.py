@@ -23,7 +23,7 @@ DEFAULT_SPEECH_LANGUAGE = "en-US"
 class Config:
     """Application configuration class."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize configuration from environment variables."""
         self._config = self._load_config()
 
@@ -68,4 +68,4 @@ class Config:
         return self._config.copy()
 
 
-config = Config()
+config: Config = Config()
