@@ -41,6 +41,12 @@ jobs:
         echo "Running pylint in strict mode..."
         pylint .
 
+    - name: Type check Python code with mypy (strict mode)
+      working-directory: ./backend
+      run: |
+        echo "Running mypy in strict mode..."
+        mypy src --config-file pyproject.toml
+
     - name: Lint Python code with ruff
       working-directory: ./backend
       run: |

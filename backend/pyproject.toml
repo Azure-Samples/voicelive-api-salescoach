@@ -32,7 +32,6 @@ disable = [
   "too-many-positional-arguments",
 ]
 ignore = [".venv"]
-type-checking-mode = "strict"
 
 # Add this section to disable W0212 for test files
 [tool.pylint."tests/**/*.py"] # Private member accessed
@@ -61,3 +60,8 @@ lint.ignore = [
 
 [tool.ruff.format]
 indent-style = "space"
+
+# Add mypy strict type checking configuration
+[tool.mypy]
+python_version = "3.11"
+strict = true
