@@ -153,14 +153,17 @@ class ConversationAnalyzer:
         EVALUATION CRITERIA:
 
         **SPEAKING TONE & STYLE ({MAX_TONE_STYLE_SCORE} points total):**
-        - professional_tone: 0-{MAX_PROFESSIONAL_TONE_SCORE} points for confident, consultative, appropriate business language
-        - active_listening: 0-{MAX_ACTIVE_LISTENING_SCORE} points for acknowledging concerns and asking clarifying questions
+        - professional_tone: 0-{MAX_PROFESSIONAL_TONE_SCORE} points for confident, consultative,
+          appropriate business language
+        - active_listening: 0-{MAX_ACTIVE_LISTENING_SCORE} points for acknowledging concerns
+          and asking clarifying questions
         - engagement_quality: 0-{MAX_ENGAGEMENT_QUALITY_SCORE} points for encouraging dialogue and thoughtful responses
 
         **CONVERSATION CONTENT QUALITY ({MAX_CONTENT_SCORE} points total):**
         - needs_assessment: 0-{MAX_NEEDS_ASSESSMENT_SCORE} points for understanding customer challenges and goals
         - value_proposition: 0-{MAX_VALUE_PROPOSITION_SCORE} points for clear benefits with data/examples/reasoning
-        - objection_handling: 0-{MAX_OBJECTION_HANDLING_SCORE} points for addressing concerns with constructive solutions
+        - objection_handling: 0-{MAX_OBJECTION_HANDLING_SCORE} points for addressing concerns
+          with constructive solutions
 
         Calculate overall_score as the sum of all individual scores (max {MAX_OVERALL_SCORE}).
 
