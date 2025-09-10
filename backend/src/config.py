@@ -6,7 +6,8 @@
 """Configuration management for the upskilling agent application."""
 
 import os
-from typing import Dict, Any
+from typing import Any, Dict
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,6 +19,12 @@ DEFAULT_REGION = "swedencentral"
 DEFAULT_MODEL = "gpt-4o"
 DEFAULT_API_VERSION = "2024-12-01-preview"
 DEFAULT_SPEECH_LANGUAGE = "en-US"
+DEFAULT_INPUT_TRANSCRIPTION_MODEL = "azure-speech"
+DEFAULT_INPUT_NOISE_REDUCTION_TYPE = "azure_deep_noise_suppression"
+DEFAULT_VOICE_NAME = "en-US-Ava:DragonHDLatestNeural"
+DEFAULT_VOICE_TYPE = "azure-standard"
+DEFAULT_AVATAR_CHARACTER = "lisa"
+DEFAULT_AVATAR_STYLE = "casual-sitting"
 
 
 class Config:
@@ -47,6 +54,14 @@ class Config:
             "azure_speech_region": os.getenv("AZURE_SPEECH_REGION", DEFAULT_REGION),
             "azure_speech_language": os.getenv("AZURE_SPEECH_LANGUAGE", DEFAULT_SPEECH_LANGUAGE),
             "api_version": DEFAULT_API_VERSION,
+            # NEW ADDITIONS
+            "azure_input_transcription_model": os.getenv("AZURE_INPUT_TRANSCRIPTION_MODEL", DEFAULT_INPUT_TRANSCRIPTION_MODEL),
+            "azure_input_transcription_language": os.getenv("AZURE_INPUT_TRANSCRIPTION_LANGUAGE", DEFAULT_SPEECH_LANGUAGE),
+            "azure_input_noise_reduction_type": os.getenv("AZURE_INPUT_NOISE_REDUCTION_TYPE", DEFAULT_INPUT_NOISE_REDUCTION_TYPE),
+            "azure_voice_name": os.getenv("AZURE_VOICE_NAME", DEFAULT_VOICE_NAME),
+            "azure_voice_type": os.getenv("AZURE_VOICE_TYPE", DEFAULT_VOICE_TYPE),
+            "azure_avatar_character": os.getenv("AZURE_AVATAR_CHARACTER", DEFAULT_AVATAR_CHARACTER),
+            "azure_avatar_style": os.getenv("AZURE_AVATAR_STYLE", DEFAULT_AVATAR_STYLE),
         }
         return result
 

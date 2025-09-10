@@ -32,6 +32,8 @@ DEFAULT_NOISE_REDUCTION_TYPE = "azure_deep_noise_suppression"
 DEFAULT_ECHO_CANCELLATION_TYPE = "server_echo_cancellation"
 DEFAULT_AVATAR_CHARACTER = "lisa"
 DEFAULT_AVATAR_STYLE = "casual-sitting"
+DEFAULT_VOICE_NAME = "en-US-Ava:DragonHDLatestNeural"
+DEFAULT_VOICE_TYPE = "azure-standard"
 
 # Message types
 SESSION_UPDATE_TYPE = "session.update"
@@ -143,20 +145,21 @@ class VoiceProxyHandler:
     def _build_base_azure_url(self) -> str:
         """Build the base Azure WebSocket URL."""
         resource_name = config["azure_ai_resource_name"]
-        project_name = config["azure_ai_project_name"]
+
         client_request_id = uuid.uuid4()
 
         return (
             f"wss://{resource_name}.{AZURE_COGNITIVE_SERVICES_DOMAIN}/"
             f"{VOICE_AGENT_ENDPOINT}?api-version={AZURE_VOICE_API_VERSION}"
             f"&x-ms-client-request-id={client_request_id}"
-            f"&agent-project-name={project_name}"
         )
 
     def _build_agent_specific_url(self, base_url: str, agent_id: Optional[str], agent_config: Dict[str, Any]) -> str:
         """Build URL for specific agent configuration."""
+        project_name = config["azure_ai_project_name"]
         if agent_config.get("is_azure_agent"):
-            return f"{base_url}&agent-id={agent_id}"
+            return (f"{base_url}&agent-id={agent_id}"
+                   f"&agent-project-name={project_name}")
         model_name = agent_config.get("model", config["model_deployment_name"])
         return f"{base_url}&model={model_name}"
 
@@ -186,6 +189,10 @@ class VoiceProxyHandler:
                     "character": DEFAULT_AVATAR_CHARACTER,
                     "style": DEFAULT_AVATAR_STYLE,
                 },
+                "voice": {
+                    "name": config.get("azure_voice_name", DEFAULT_VOICE_NAME),
+                    "type": config.get("azure_voice_type", DEFAULT_VOICE_TYPE),
+                }
             },
         }
 
