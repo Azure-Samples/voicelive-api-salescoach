@@ -158,8 +158,7 @@ class VoiceProxyHandler:
         """Build URL for specific agent configuration."""
         project_name = config["azure_ai_project_name"]
         if agent_config.get("is_azure_agent"):
-            return (f"{base_url}&agent-id={agent_id}"
-                   f"&agent-project-name={project_name}")
+            return f"{base_url}&agent-id={agent_id}" f"&agent-project-name={project_name}"
         model_name = agent_config.get("model", config["model_deployment_name"])
         return f"{base_url}&model={model_name}"
 
@@ -190,9 +189,9 @@ class VoiceProxyHandler:
                     "style": DEFAULT_AVATAR_STYLE,
                 },
                 "voice": {
-                    "name": config.get("azure_voice_name", DEFAULT_VOICE_NAME),
-                    "type": config.get("azure_voice_type", DEFAULT_VOICE_TYPE),
-                }
+                    "name": config["azure_voice_name"],
+                    "type": config["azure_voice_type"],
+                },
             },
         }
 
