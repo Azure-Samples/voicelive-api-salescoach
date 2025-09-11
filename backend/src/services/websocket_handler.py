@@ -134,11 +134,12 @@ class VoiceProxyHandler:
     def _build_azure_url(self, agent_id: Optional[str], agent_config: Optional[Dict[str, Any]]) -> str:
         """Build the Azure WebSocket URL."""
         base_url = self._build_base_azure_url()
+        project_name = config["azure_ai_project_name"]
 
         if agent_config:
             return self._build_agent_specific_url(base_url, agent_id, agent_config)
         if config["agent_id"]:
-            return f"{base_url}&agent-id={config['agent_id']}"
+            return f"{base_url}&agent-id={config['agent_id']}" f"&agent-project-name={project_name}"
         model_name = config["model_deployment_name"]
         return f"{base_url}&model={model_name}"
 
