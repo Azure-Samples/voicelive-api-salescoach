@@ -260,3 +260,84 @@ class TestAgentManager:
         # Verify deletion
         assert agent_id not in agent_manager.agents
         mock_client_instance.agents.delete_agent.assert_called_once_with(agent_id)
+
+    @patch("src.services.managers.config")
+    @patch("src.services.managers.AIProjectClient")
+    def test_create_agent_azure_persistent_client(self, mock_ai_client, mock_config):
+        """Ensure Azure agent creation uses persistent client (no context manager)."""
+        mock_config.__getitem__.side_effect = lambda key: {
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, "")
+        mock_config.get.side_effect = lambda key, default=None: {
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, default)
+
+        mock_client_instance = MagicMock()
+        # Add __enter__/__exit__ that should NOT be called anymore
+        mock_client_instance.__enter__ = Mock(return_value=mock_client_instance)
+        mock_client_instance.__exit__ = Mock(return_value=None)
+        mock_agent = Mock()
+        mock_agent.id = "azure-agent-id-123"
+        mock_client_instance.agents.create_agent.return_value = mock_agent
+        mock_ai_client.return_value = mock_client_instance
+
+        manager = AgentManager()
+        scenario_data = {
+            "messages": [{"content": "Instructions"}],
+            "modelParameters": {"temperature": 0.9, "max_tokens": 1000},
+        }
+        agent_id = manager.create_agent("scenario-x", scenario_data)
+
+        assert agent_id == "azure-agent-id-123"
+        # Context manager methods should not be invoked
+        mock_client_instance.__enter__.assert_not_called()
+        mock_client_instance.__exit__.assert_not_called()
+        mock_client_instance.agents.create_agent.assert_called_once()
+
+    @patch("src.services.managers.config")
+    @patch("src.services.managers.AIProjectClient")
+    def test_close_closes_project_client(self, mock_ai_client, mock_config):
+        """Test that AgentManager.close() properly closes the underlying client."""
+        mock_config.__getitem__.side_effect = lambda key: {
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, "")
+        mock_config.get.side_effect = lambda key, default=None: {
+            "use_azure_ai_agents": True,
+            "project_endpoint": "https://test.endpoint",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, default)
+
+        mock_client_instance = MagicMock()
+        mock_ai_client.return_value = mock_client_instance
+
+        manager = AgentManager()
+        manager.close()
+        mock_client_instance.close.assert_called_once()
+
+    @patch("src.services.managers.config")
+    def test_local_fallback_when_endpoint_missing(self, mock_config):
+        """If azure flag is True but project endpoint missing, should fallback to local agent."""
+        mock_config.__getitem__.side_effect = lambda key: {
+            "use_azure_ai_agents": True,  # enabled
+            "project_endpoint": "",  # missing -> fallback
+            "model_deployment_name": "gpt-4o",
+        }.get(key, "")
+        mock_config.get.side_effect = lambda key, default=None: {
+            "use_azure_ai_agents": True,
+            "project_endpoint": "",
+            "model_deployment_name": "gpt-4o",
+        }.get(key, default)
+
+        with patch("src.services.managers.DefaultAzureCredential"):
+            manager = AgentManager()
+
+        scenario_data = {"messages": [{"content": "Hi"}]}
+        agent_id = manager.create_agent("fallback-scenario", scenario_data)
+        assert agent_id in manager.agents
+        assert manager.agents[agent_id]["is_azure_agent"] is False

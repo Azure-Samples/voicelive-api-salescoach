@@ -17,6 +17,8 @@ param principalType string
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
 
+var projectName = 'voicelab-project-${resourceToken}'
+
 param gptModelName string = 'gpt-4o'
 param gptModelVersion string = '2024-08-06'
 param gptDeploymentName string = 'gpt-4o'
@@ -41,7 +43,7 @@ param openAiModelDeployments array = [
   }
 ]
 
-resource aiFoundryResource 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+resource aiFoundryResource 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   name: 'aifoundry-voicelab-${resourceToken}'
   location: location
   tags: tags
@@ -76,6 +78,18 @@ resource aiFoundryResource 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
       }
     }
   ]
+
+  resource project 'projects@2025-06-01' = {
+    name: projectName
+    location: location
+    identity: {
+      type: 'SystemAssigned'
+    }
+    properties: {
+      description: 'Default project'
+      displayName: 'Default Project'
+    }
+  }
 }
 
 resource speechService 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
@@ -198,7 +212,7 @@ module voicelab 'br/public:avm/res/app/container-app:0.8.0' = {
           }
           {
             name: 'PROJECT_ENDPOINT'
-            value: '${aiFoundryResource.properties.endpoint}api/projects/default-project'
+            value: '${aiFoundryResource.properties.endpoint}api/projects/${projectName}'
           }
           {
             name: 'MODEL_DEPLOYMENT_NAME'

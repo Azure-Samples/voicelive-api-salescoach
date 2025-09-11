@@ -232,33 +232,32 @@ CRITICAL INTERACTION GUIDELINES:
         if not self.project_client:
             logger.warning("Project client not available, using fallback scenario")
             return ""
-        project_client = self.project_client
+        project_client = self.project_client  # persistent client - do NOT use context manager per call
 
         try:
-            with project_client:
-                agent_name = self._generate_agent_name(scenario_id)
-                agent = project_client.agents.create_agent(
-                    model=model,
-                    name=agent_name,
-                    instructions=instructions,
-                    tools=[],
-                    temperature=temperature,
-                )
+            agent_name = self._generate_agent_name(scenario_id)
+            agent = project_client.agents.create_agent(
+                model=model,
+                name=agent_name,
+                instructions=instructions,
+                tools=[],
+                temperature=temperature,
+            )
 
-                agent_id = agent.id
-                logger.info("Created Azure AI agent: %s", agent_id)
+            agent_id = agent.id
+            logger.info("Created Azure AI agent: %s", agent_id)
 
-                self.agents[agent_id] = self._create_agent_config(
-                    scenario_id=scenario_id,
-                    agent_id=agent_id,
-                    is_azure_agent=True,
-                    instructions=instructions,
-                    model=model,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
+            self.agents[agent_id] = self._create_agent_config(
+                scenario_id=scenario_id,
+                agent_id=agent_id,
+                is_azure_agent=True,
+                instructions=instructions,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
 
-                return agent_id
+            return agent_id
 
         except Exception as e:
             logger.error("Error creating Azure agent: %s", e)
@@ -354,9 +353,9 @@ CRITICAL INTERACTION GUIDELINES:
 
                 if agent_config.get("is_azure_agent") and self.project_client:
                     try:
-                        with self.project_client:
-                            self.project_client.agents.delete_agent(agent_id)
-                            logger.info("Deleted Azure AI agent: %s", agent_id)
+                        # Use persistent client directly (no context manager that would close transport)
+                        self.project_client.agents.delete_agent(agent_id)
+                        logger.info("Deleted Azure AI agent: %s", agent_id)
                     except Exception as e:
                         logger.error("Error deleting Azure agent: %s", e)
 
@@ -364,3 +363,18 @@ CRITICAL INTERACTION GUIDELINES:
                 logger.info("Deleted agent from local storage: %s", agent_id)
         except Exception as e:
             logger.error("Error deleting agent %s: %s", agent_id, e)
+
+    def close(self) -> None:
+        """Close underlying resources (Azure project client)."""
+        try:
+            if self.project_client:
+                self.project_client.close()
+                logger.info("AI Project client closed")
+        except Exception as e:
+            logger.debug("Error while closing AI Project client: %s", e)
+
+    def __del__(self):  # best-effort cleanup
+        try:
+            self.close()
+        except Exception:
+            pass

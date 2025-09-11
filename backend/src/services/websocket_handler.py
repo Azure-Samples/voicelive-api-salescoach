@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 import websockets
 import websockets.asyncio.client
+from azure.identity import DefaultAzureCredential
 
 from src.config import config
 from src.services.managers import AgentManager
@@ -111,34 +112,65 @@ class VoiceProxyHandler:
         try:
             agent_config = self.agent_manager.get_agent(agent_id) if agent_id else None
 
-            azure_url = self._build_azure_url(agent_id, agent_config)
+            # Determine whether this is an Azure Agent (Bearer) or local/model (api-key) flow
+            is_azure_agent = bool(agent_config and agent_config.get("is_azure_agent"))
 
             api_key = config.get("azure_openai_api_key")
-            if not api_key:
-                logger.error("No API key found in configuration (azure_openai_api_key)")
-                return None
+            token_value: Optional[str] = None
+            if is_azure_agent or config.get("agent_id"):
+                # Attempt to acquire AAD token (best effort); fall back to API key if present
+                scopes = "https://ai.azure.com/.default"
+                try:
+                    token_credential = DefaultAzureCredential()
+                    token = token_credential.get_token(scopes)
+                    token_value = token.token
+                except Exception as token_err:  # pragma: no cover - network/identity issues
+                    logger.warning("Failed to acquire Azure AD token, will fall back to api-key if available: %s", token_err)
 
-            headers = {"api-key": api_key}
+            # Build headers preference: Bearer token if we have one, else API key
+            headers: Dict[str, str]
+            if token_value:
+                headers = {"Authorization": f"Bearer {token_value}"}
+            else:
+                if not api_key:
+                    logger.error(
+                        "No authentication method available: missing both Azure AD token and azure_openai_api_key"
+                    )
+                    return None
+                headers = {"api-key": api_key}
+
+            azure_url = self._build_azure_url(agent_id, agent_config, token_value)
 
             azure_ws = await websockets.connect(azure_url, additional_headers=headers)
-            logger.info("Connected to Azure Voice API with agent: %s", agent_id or "default")
+            logger.info(
+                "Connected to Azure Voice API with agent: %s (auth=%s)",
+                agent_id or "default",
+                "bearer" if token_value else "api-key",
+            )
 
             await self._send_initial_config(azure_ws, agent_config)
 
             return azure_ws
 
-        except Exception as e:
+        except Exception as e:  # broad catch to ensure we surface connection failures gracefully
             logger.error("Failed to connect to Azure: %s", e)
             return None
 
-    def _build_azure_url(self, agent_id: Optional[str], agent_config: Optional[Dict[str, Any]]) -> str:
+    def _build_azure_url(
+        self, agent_id: Optional[str], agent_config: Optional[Dict[str, Any]], token: Optional[str] = None
+    ) -> str:
         """Build the Azure WebSocket URL."""
         base_url = self._build_base_azure_url()
+        project_name = config["azure_ai_project_name"]
 
         if agent_config:
-            return self._build_agent_specific_url(base_url, agent_id, agent_config)
+            return self._build_agent_specific_url(base_url, agent_id, agent_config, token)
         if config["agent_id"]:
-            return f"{base_url}&agent-id={config['agent_id']}"
+            # Only append access token parameter if we actually have one
+            access_token_param = f"&agent-access-token={token}" if token else ""
+            return (
+                f"{base_url}&agent-id={config['agent_id']}" f"&agent-project-name={project_name}{access_token_param}"
+            )
         model_name = config["model_deployment_name"]
         return f"{base_url}&model={model_name}"
 
@@ -154,11 +186,14 @@ class VoiceProxyHandler:
             f"&x-ms-client-request-id={client_request_id}"
         )
 
-    def _build_agent_specific_url(self, base_url: str, agent_id: Optional[str], agent_config: Dict[str, Any]) -> str:
+    def _build_agent_specific_url(
+        self, base_url: str, agent_id: Optional[str], agent_config: Dict[str, Any], token: Optional[str]
+    ) -> str:
         """Build URL for specific agent configuration."""
         project_name = config["azure_ai_project_name"]
         if agent_config.get("is_azure_agent"):
-            return f"{base_url}&agent-id={agent_id}" f"&agent-project-name={project_name}"
+            access_token_param = f"&agent-access-token={token}" if token else ""
+            return f"{base_url}&agent-id={agent_id}" f"&agent-project-name={project_name}{access_token_param}"
         model_name = agent_config.get("model", config["model_deployment_name"])
         return f"{base_url}&model={model_name}"
 
