@@ -78,7 +78,7 @@ export default function App() {
     updateCustomScenario,
     deleteCustomScenario,
   } = useScenarios()
-  const { playAudio } = useAudioPlayer()
+  const { playAudio, resetAudio } = useAudioPlayer()
   const activeScenario =
     selectedScenarioData ||
     scenarios.find(s => s.id === selectedScenario) ||
@@ -141,6 +141,9 @@ export default function App() {
 
   const handleStart = async (avatarValue: string) => {
     if (!selectedScenario) return
+
+    resetAudio()
+    clearMessages()
 
     try {
       const avatarConfig = parseAvatarValue(avatarValue)

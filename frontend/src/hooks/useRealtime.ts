@@ -89,7 +89,9 @@ export function useRealtime(options: RealtimeOptions) {
       }
     }
 
-    ws.onclose = () => setConnected(false)
+    ws.onclose = () => {
+      setConnected(false)
+    }
     wsRef.current = ws
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.agentId])
@@ -115,9 +117,10 @@ export function useRealtime(options: RealtimeOptions) {
   )
 
   useEffect(() => {
+    if (!options.agentId) return
     connect()
     return () => wsRef.current?.close()
-  }, [connect])
+  }, [connect, options.agentId])
 
   return {
     connected,

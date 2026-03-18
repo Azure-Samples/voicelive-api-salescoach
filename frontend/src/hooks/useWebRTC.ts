@@ -3,14 +3,34 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { useRef, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 export function useWebRTC(onSendOffer: (sdp: string) => void) {
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const audioElementsRef = useRef<HTMLAudioElement[]>([])
 
   const setupWebRTC = useCallback(
     async (iceServers: any, username?: string, password?: string) => {
+      // Clear any pending ICE gathering timeout from a previous connection
+      if (gatheringTimeoutRef.current) {
+        clearTimeout(gatheringTimeoutRef.current)
+        gatheringTimeoutRef.current = null
+      }
+
+      // Close existing peer connection before creating a new one
+      if (pcRef.current) {
+        pcRef.current.close()
+        pcRef.current = null
+      }
+
+      // Remove previously injected audio elements
+      audioElementsRef.current.forEach(el => {
+        el.srcObject = null
+        el.remove()
+      })
+      audioElementsRef.current = []
+
       let servers = Array.isArray(iceServers)
         ? iceServers
         : [{ urls: iceServers }]
@@ -28,17 +48,28 @@ export function useWebRTC(onSendOffer: (sdp: string) => void) {
         bundlePolicy: 'max-bundle',
       })
 
+      let offerSent = false
+      const sendOfferOnce = () => {
+        if (offerSent || !pc.localDescription) return
+        offerSent = true
+        const sdp = btoa(
+          JSON.stringify({
+            type: 'offer',
+            sdp: pc.localDescription.sdp,
+          })
+        )
+        onSendOffer(sdp)
+      }
+
       pc.onicecandidate = e => {
-        if (!e.candidate && pc.localDescription) {
-          const sdp = btoa(
-            JSON.stringify({
-              type: 'offer',
-              sdp: pc.localDescription.sdp,
-            })
-          )
-          onSendOffer(sdp)
+        if (!e.candidate) {
+          sendOfferOnce()
         }
       }
+
+      // Fallback: send offer after 3s even if ICE gathering hasn't completed.
+      // Avoids ~30s delays when TURN servers are slow on reconnection.
+      gatheringTimeoutRef.current = setTimeout(sendOfferOnce, 3000)
 
       pc.ontrack = e => {
         if (e.track.kind === 'video' && videoRef.current) {
@@ -50,6 +81,7 @@ export function useWebRTC(onSendOffer: (sdp: string) => void) {
           audio.autoplay = true
           audio.style.display = 'none'
           document.body.appendChild(audio)
+          audioElementsRef.current.push(audio)
         }
       }
 
@@ -77,9 +109,17 @@ export function useWebRTC(onSendOffer: (sdp: string) => void) {
     }
   }, [])
 
+  const gatheringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     return () => {
+      if (gatheringTimeoutRef.current) clearTimeout(gatheringTimeoutRef.current)
       pcRef.current?.close()
+      audioElementsRef.current.forEach(el => {
+        el.srcObject = null
+        el.remove()
+      })
+      audioElementsRef.current = []
     }
   }, [])
 

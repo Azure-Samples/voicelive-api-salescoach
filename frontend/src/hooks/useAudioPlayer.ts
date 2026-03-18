@@ -16,6 +16,14 @@ export function useAudioPlayer() {
     return audioCtxRef.current
   }, [])
 
+  const resetAudio = useCallback(() => {
+    nextPlayTimeRef.current = 0
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close()
+      audioCtxRef.current = null
+    }
+  }, [])
+
   const playAudio = useCallback(
     (base64: string) => {
       const audioCtx = initAudio()
@@ -46,5 +54,5 @@ export function useAudioPlayer() {
     [initAudio]
   )
 
-  return { playAudio }
+  return { playAudio, resetAudio }
 }

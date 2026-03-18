@@ -218,13 +218,12 @@ def voice_proxy(ws: simple_websocket.ws.Server):
 
     logger.info("New WebSocket connection")
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    loop.run_until_complete(voice_proxy_handler.handle_connection(ws))
+        loop.run_until_complete(voice_proxy_handler.handle_connection(ws))
+    finally:
+        loop.close()
 
 
 @app.route(API_GRAPH_SCENARIO_ENDPOINT, methods=["POST"])

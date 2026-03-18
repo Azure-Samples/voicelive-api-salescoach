@@ -251,6 +251,10 @@ class VoiceProxyHandler:
 
         for task in pending:
             task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
 
     async def _forward_client_to_azure(
         self,

@@ -43,6 +43,7 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
   const [recording, setRecording] = useState(false)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const workletRef = useRef<AudioWorkletNode | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const audioRecording = useRef<any[]>([])
 
   const initAudio = useCallback(async () => {
@@ -73,6 +74,7 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
         echoCancellation: true,
       },
     })
+    streamRef.current = stream
 
     const source = audioCtx.createMediaStreamSource(stream)
     const worklet = new AudioWorkletNode(audioCtx, 'audio-recorder')
@@ -109,6 +111,10 @@ export function useRecorder(onAudioChunk: (base64: string) => void) {
       workletRef.current.port.postMessage({ command: 'STOP' })
       workletRef.current.disconnect()
       workletRef.current = null
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
     }
     setRecording(false)
   }, [])
