@@ -344,9 +344,9 @@ class PronunciationAssessor:
             wav_buffer.seek(0)
             return wav_buffer.read()
 
-    def _log_assessment_info(self, wav_audio: bytes, reference_text: Optional[str]) -> None:
+    def _log_assessment_info(self, pcm_audio: bytes, reference_text: Optional[str]) -> None:
         """Log information about the assessment being performed."""
-        logger.info("Starting pronunciation assessment with audio size: %s bytes", len(wav_audio))
+        logger.info("Starting pronunciation assessment with audio size: %s bytes", len(pcm_audio))
         logger.info("Reference text: %s", reference_text or "None")
         logger.info("Speech key configured: %s", "Yes" if self.speech_key else "No")
         logger.info("Speech region: %s", self.speech_region)
@@ -368,8 +368,8 @@ class PronunciationAssessor:
         pronunciation_config.enable_prosody_assessment()
         return pronunciation_config
 
-    def _create_audio_config(self, wav_audio: bytes) -> speechsdk.audio.AudioConfig:
-        """Create audio configuration from WAV data."""
+    def _create_audio_config(self, pcm_audio: bytes) -> speechsdk.audio.AudioConfig:
+        """Create audio configuration from raw PCM data."""
         audio_format = speechsdk.audio.AudioStreamFormat(
             samples_per_second=AUDIO_SAMPLE_RATE,
             bits_per_sample=AUDIO_BITS_PER_SAMPLE,
@@ -378,7 +378,7 @@ class PronunciationAssessor:
         )
 
         push_stream = speechsdk.audio.PushAudioInputStream(stream_format=audio_format)
-        push_stream.write(wav_audio)
+        push_stream.write(pcm_audio)
         push_stream.close()
 
         return speechsdk.audio.AudioConfig(stream=push_stream)
@@ -426,8 +426,7 @@ class PronunciationAssessor:
             if len(combined_audio) < MIN_AUDIO_SIZE_BYTES:
                 logger.warning("Audio might be too short: %s bytes", len(combined_audio))
 
-            wav_audio = self._create_wav_audio(combined_audio)
-            return await self._perform_assessment(wav_audio, reference_text)
+            return await self._perform_assessment(bytes(combined_audio), reference_text)
 
         except Exception as e:
             logger.error("Error in pronunciation assessment: %s", e)
@@ -447,13 +446,13 @@ class PronunciationAssessor:
 
         return combined_audio
 
-    async def _perform_assessment(self, wav_audio: bytes, reference_text: Optional[str]) -> Optional[Dict[str, Any]]:
+    async def _perform_assessment(self, pcm_audio: bytes, reference_text: Optional[str]) -> Optional[Dict[str, Any]]:
         """Perform the actual pronunciation assessment."""
-        self._log_assessment_info(wav_audio, reference_text)
+        self._log_assessment_info(pcm_audio, reference_text)
 
         speech_config = self._create_speech_config()
         pronunciation_config = self._create_pronunciation_config(reference_text)
-        audio_config = self._create_audio_config(wav_audio)
+        audio_config = self._create_audio_config(pcm_audio)
 
         speech_recognizer = speechsdk.SpeechRecognizer(
             speech_config=speech_config,
@@ -464,8 +463,28 @@ class PronunciationAssessor:
 
         result = await asyncio.get_event_loop().run_in_executor(None, speech_recognizer.recognize_once)
 
-        pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
-        return self._build_assessment_result(pronunciation_result, result)
+        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            logger.info("Speech recognized: %s", result.text[:100])
+            pronunciation_result = speechsdk.PronunciationAssessmentResult(result)
+            return self._build_assessment_result(pronunciation_result, result)
+
+        if result.reason == speechsdk.ResultReason.NoMatch:
+            details = result.no_match_details
+            logger.warning("Speech not recognized (NoMatch): reason=%s", details.reason if details else "unknown")
+            return None
+
+        if result.reason == speechsdk.ResultReason.Canceled:
+            cancellation = result.cancellation_details
+            logger.error(
+                "Speech recognition canceled: reason=%s, error_code=%s, error_details=%s",
+                cancellation.reason,
+                cancellation.error_code,
+                cancellation.error_details,
+            )
+            return None
+
+        logger.warning("Unexpected recognition result reason: %s", result.reason)
+        return None
 
     def _extract_word_details(self, result: speechsdk.SpeechRecognitionResult) -> List[Dict[str, Any]]:
         """Extract word-level pronunciation details."""
