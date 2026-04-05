@@ -198,11 +198,14 @@ class TestVoiceProxyHandler:
         assert credential.key == "test-api-key"
 
     @patch("src.services.websocket_handler.config")
-    def test_get_credential_missing_key(self, mock_config):
-        """Test getting credential with missing API key."""
+    def test_get_credential_missing_key_falls_back_to_managed_identity(self, mock_config):
+        """Test getting credential falls back to DefaultAzureCredential when no API key."""
         mock_config.get.return_value = None
 
         handler = VoiceProxyHandler(Mock())
         credential = handler._get_credential()
 
-        assert credential is None
+        # Should return AsyncDefaultAzureCredential, not None
+        from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
+
+        assert isinstance(credential, AsyncDefaultAzureCredential)

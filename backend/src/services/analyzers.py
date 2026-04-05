@@ -494,8 +494,8 @@ class PronunciationAssessor:
             logger.error(
                 "Speech recognition canceled: reason=%s, error_code=%s, error_details=%s",
                 cancellation.reason,
-                cancellation.error_code,
-                cancellation.error_details,
+                getattr(cancellation, "error_code", "unknown"),
+                getattr(cancellation, "error_details", "unknown"),
             )
             return None
 
