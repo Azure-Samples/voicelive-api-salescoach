@@ -57,4 +57,5 @@ output SERVICE_VOICELAB_URI string = resources.outputs.SERVICE_VOICELAB_URI
 output PROJECT_ENDPOINT string = resources.outputs.PROJECT_ENDPOINT
 output AZURE_OPENAI_ENDPOINT string = resources.outputs.AZURE_OPENAI_ENDPOINT
 output AZURE_SPEECH_REGION string = resources.outputs.AZURE_SPEECH_REGION
+output AZURE_SPEECH_ENDPOINT string = resources.outputs.AZURE_SPEECH_ENDPOINT
 output AI_FOUNDRY_RESOURCE_NAME string = resources.outputs.AI_FOUNDRY_RESOURCE_NAME

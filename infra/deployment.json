@@ -288,6 +288,10 @@
                         "name": {
                             "type": "string",
                             "value": "[parameters('name')]"
+                        },
+                        "endpoint": {
+                            "type": "string",
+                            "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))).endpoint]"
                         }
                     }
                 }
@@ -389,6 +393,9 @@
                     "speechServiceName": {
                         "value": "[reference('speechServiceDeployment').outputs.name.value]"
                     },
+                    "speechServiceEndpoint": {
+                        "value": "[reference('speechServiceDeployment').outputs.endpoint.value]"
+                    },
                     "gptDeploymentName": {
                         "value": "[parameters('gptDeploymentName')]"
                     },
@@ -422,6 +429,9 @@
                             "type": "string"
                         },
                         "speechServiceName": {
+                            "type": "string"
+                        },
+                        "speechServiceEndpoint": {
                             "type": "string"
                         },
                         "gptDeploymentName": {
@@ -496,6 +506,10 @@
                                                 {
                                                     "name": "AZURE_SPEECH_REGION",
                                                     "value": "[parameters('location')]"
+                                                },
+                                                {
+                                                    "name": "AZURE_SPEECH_ENDPOINT",
+                                                    "value": "[parameters('speechServiceEndpoint')]"
                                                 },
                                                 {
                                                     "name": "AZURE_AI_RESOURCE_NAME",
@@ -858,6 +872,10 @@
         "AZURE_SPEECH_REGION": {
             "type": "string",
             "value": "[parameters('location')]"
+        },
+        "AZURE_SPEECH_ENDPOINT": {
+            "type": "string",
+            "value": "[reference('speechServiceDeployment').outputs.endpoint.value]"
         },
         "AI_FOUNDRY_RESOURCE_NAME": {
             "type": "string",
