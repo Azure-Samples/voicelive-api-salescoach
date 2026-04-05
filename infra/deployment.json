@@ -186,7 +186,7 @@
                         {
                             "type": "Microsoft.CognitiveServices/accounts/deployments",
                             "apiVersion": "2024-10-01",
-                            "name": "[format('{0}/text-embedding-ada-002', parameters('name'))]",
+                            "name": "[format('{0}/text-embedding-3-small', parameters('name'))]",
                             "sku": {
                                 "name": "Standard",
                                 "capacity": "[parameters('embeddingCapacity')]"
@@ -194,7 +194,7 @@
                             "properties": {
                                 "model": {
                                     "format": "OpenAI",
-                                    "name": "text-embedding-ada-002"
+                                    "name": "text-embedding-3-small"
                                 },
                                 "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
                             },

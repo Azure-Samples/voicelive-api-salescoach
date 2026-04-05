@@ -32,8 +32,8 @@ param openAiModelDeployments array = [
     }
   }
   {
-    name: 'text-embedding-ada-002'
-    model: 'text-embedding-ada-002'
+    name: 'text-embedding-3-small'
+    model: 'text-embedding-3-small'
     sku: {
       name: 'Standard'
       capacity: 10
