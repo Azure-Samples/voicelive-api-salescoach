@@ -197,12 +197,14 @@ class TestPronunciationAssessor:
         # Test that it initializes with config values
         assert hasattr(assessor, "speech_key")
         assert hasattr(assessor, "speech_region")
+        assert hasattr(assessor, "speech_endpoint")
 
     @pytest.mark.asyncio
-    async def test_assess_pronunciation_no_speech_key(self):
-        """Test pronunciation assessment with no speech key configured."""
+    async def test_assess_pronunciation_no_speech_config(self):
+        """Test pronunciation assessment with no speech key or endpoint configured."""
         assessor = PronunciationAssessor()
         assessor.speech_key = None
+        assessor.speech_endpoint = None
 
         result = await assessor.assess_pronunciation([], "test text")
         assert result is None

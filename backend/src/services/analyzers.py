@@ -301,6 +301,7 @@ class PronunciationAssessor:
         """Initialize the pronunciation assessor."""
         self.speech_key = config["azure_speech_key"]
         self.speech_region = config["azure_speech_region"]
+        self.speech_endpoint = config.get("azure_speech_endpoint", "")
 
     def _create_wav_audio(self, audio_bytes: bytearray) -> bytes:
         """Create WAV format audio from raw PCM bytes."""
@@ -329,7 +330,12 @@ class PronunciationAssessor:
         else:
             credential = DefaultAzureCredential()
             token = credential.get_token("https://cognitiveservices.azure.com/.default")
-            speech_config = speechsdk.SpeechConfig(auth_token=token.token, region=self.speech_region)
+            if self.speech_endpoint:
+                # Custom domain: must use endpoint= and set authorization_token separately
+                speech_config = speechsdk.SpeechConfig(endpoint=self.speech_endpoint)
+                speech_config.authorization_token = token.token
+            else:
+                speech_config = speechsdk.SpeechConfig(auth_token=token.token, region=self.speech_region)
         speech_config.speech_recognition_language = config["azure_speech_language"]
         return speech_config
 
@@ -387,8 +393,8 @@ class PronunciationAssessor:
         Returns:
             Optional[Dict[str, Any]]: Pronunciation assessment results or None if assessment fails
         """
-        if not self.speech_key:
-            logger.error("Azure Speech key not configured")
+        if not self.speech_key and not self.speech_endpoint:
+            logger.error("Azure Speech not configured (no key or endpoint)")
             return None
 
         try:

@@ -16,7 +16,7 @@ import {
     makeStyles,
     tokens,
 } from '@fluentui/react-components'
-import { Edit24Regular, PersonEdit24Regular } from '@fluentui/react-icons'
+import { Edit24Regular } from '@fluentui/react-icons'
 import { useState } from 'react'
 import { api } from '../services/api'
 import { AVATAR_OPTIONS, CustomScenario, CustomScenarioData, DEFAULT_AVATAR, Scenario } from '../types'
@@ -82,11 +82,6 @@ const useStyles = makeStyles({
   graphIcon: {
     fontSize: '24px',
     marginRight: tokens.spacingHorizontalS,
-  },
-  customIcon: {
-    fontSize: '20px',
-    marginRight: tokens.spacingHorizontalXS,
-    color: tokens.colorBrandForeground1,
   },
   avatarSelector: {
     display: 'flex',
@@ -231,7 +226,6 @@ export function ScenarioList({
 
       <div className={styles.sectionHeader}>
         <Text size={400} weight="semibold">
-          <PersonEdit24Regular className={styles.customIcon} />
           Your Custom Scenarios
         </Text>
         <CustomScenarioEditor

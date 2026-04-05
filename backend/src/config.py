@@ -52,6 +52,7 @@ class Config:
             "resource_group_name": os.getenv("RESOURCE_GROUP_NAME", ""),
             "azure_speech_key": os.getenv("AZURE_SPEECH_KEY", ""),
             "azure_speech_region": os.getenv("AZURE_SPEECH_REGION", DEFAULT_REGION),
+            "azure_speech_endpoint": os.getenv("AZURE_SPEECH_ENDPOINT", ""),
             "azure_speech_language": os.getenv("AZURE_SPEECH_LANGUAGE", DEFAULT_SPEECH_LANGUAGE),
             "api_version": DEFAULT_API_VERSION,
             # NEW ADDITIONS

@@ -195,6 +195,10 @@ module voicelab 'br/public:avm/res/app/container-app:0.8.0' = {
             value: location
           }
           {
+            name: 'AZURE_SPEECH_ENDPOINT'
+            value: speechService.properties.endpoint
+          }
+          {
             name: 'AZURE_AI_RESOURCE_NAME'
             value: aiFoundryResource.name
           }
@@ -297,4 +301,5 @@ output VOICELAB_IDENTITY_PRINCIPAL_ID string = voicelabIdentity.outputs.principa
 output PROJECT_ENDPOINT string = '${aiFoundryResource.properties.endpoint}api/projects/default-project'
 output AZURE_OPENAI_ENDPOINT string = aiFoundryResource.properties.endpoint
 output AZURE_SPEECH_REGION string =  location
+output AZURE_SPEECH_ENDPOINT string = speechService.properties.endpoint
 output AI_FOUNDRY_RESOURCE_NAME string = aiFoundryResource.name
