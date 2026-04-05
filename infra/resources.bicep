@@ -17,9 +17,9 @@ param principalType string
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
 
-param gptModelName string = 'gpt-4o'
-param gptModelVersion string = '2024-11-20'
-param gptDeploymentName string = 'gpt-4o'
+param gptModelName string = 'gpt-4.1-mini'
+param gptModelVersion string = '2025-04-14'
+param gptDeploymentName string = 'gpt-4.1-mini'
 
 param openAiModelDeployments array = [
   {

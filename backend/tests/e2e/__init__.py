@@ -19,6 +19,11 @@ import requests
 from tests.conftest import requires_live_endpoint, requires_speech
 
 
+def _get_model_name():
+    """Get the deployed model name from env or default."""
+    return os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-4.1-mini")
+
+
 def _get_service_uri():
     """Get the deployed service URI."""
     return os.getenv("SERVICE_VOICELAB_URI", "").rstrip("/")
@@ -127,7 +132,7 @@ class TestAgentLifecycle:
                     "content": "You are a helpful test assistant. Keep responses very short."
                 }
             ],
-            "model": "gpt-4o",
+            "model": _get_model_name(),
             "modelParameters": {"temperature": 0.5, "max_tokens": 200},
         }
 
@@ -294,7 +299,7 @@ class TestWebSocketVoice:
                     "content": "You are a test assistant. Reply with exactly one short sentence."
                 }
             ],
-            "model": "gpt-4o",
+            "model": _get_model_name(),
             "modelParameters": {"temperature": 0.3, "max_tokens": 100},
         }
         create_resp = requests.post(

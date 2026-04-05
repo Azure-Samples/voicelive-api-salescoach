@@ -26,21 +26,21 @@
         },
         "gptModelName": {
             "type": "string",
-            "defaultValue": "gpt-4o",
+            "defaultValue": "gpt-4.1-mini",
             "metadata": {
                 "description": "Azure OpenAI GPT Model Name"
             }
         },
         "gptModelVersion": {
             "type": "string",
-            "defaultValue": "2024-08-06",
+            "defaultValue": "2025-04-14",
             "metadata": {
                 "description": "Azure OpenAI GPT Model Version"
             }
         },
         "gptDeploymentName": {
             "type": "string",
-            "defaultValue": "gpt-4o",
+            "defaultValue": "gpt-4.1-mini",
             "metadata": {
                 "description": "Azure OpenAI GPT Model Deployment Name"
             }
