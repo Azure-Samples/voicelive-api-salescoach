@@ -97,10 +97,7 @@ class TestOpenAIIntegration:
 
     def test_sales_evaluation_prompt(self, openai_client):
         """Test the full sales evaluation structured output matching the app's schema."""
-        from src.services.analyzers import ConversationAnalyzer
-
-        analyzer = ConversationAnalyzer()
-        response_format = analyzer._get_response_format()
+        from src.services.analyzers import SalesEvaluation
 
         transcript = """
         User: Hi, I'm calling about your enterprise cloud solution. We're looking to migrate our infrastructure.
@@ -110,7 +107,7 @@ class TestOpenAIIntegration:
         User: We'd like to start the migration within Q2 this year.
         """
 
-        response = openai_client.chat.completions.create(
+        response = openai_client.beta.chat.completions.parse(
             model=os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-4o"),
             messages=[
                 {
@@ -123,13 +120,15 @@ class TestOpenAIIntegration:
                     "content": f"Evaluate this sales conversation:\n{transcript}",
                 },
             ],
-            response_format=response_format,
+            response_format=SalesEvaluation,
             max_tokens=500,
         )
 
-        content = response.choices[0].message.content
-        assert content is not None
-        result = json.loads(content)
+        parsed = response.choices[0].message.parsed
+        assert parsed is not None
+
+        # Validate via Pydantic model attributes
+        result = parsed.model_dump()
 
         # Validate structure matches the app's expected format
         assert "speaking_tone_style" in result

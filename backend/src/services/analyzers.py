@@ -18,11 +18,37 @@ import azure.cognitiveservices.speech as speechsdk  # pyright: ignore[reportMiss
 import yaml
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
+from pydantic import BaseModel
 
 from src.config import config
 from src.services.scenario_utils import determine_scenario_directory
 
 logger = logging.getLogger(__name__)
+
+
+# --- Pydantic models for structured evaluation output ---
+
+class SpeakingToneStyle(BaseModel):
+    professional_tone: int
+    active_listening: int
+    engagement_quality: int
+    total: int
+
+
+class ConversationContent(BaseModel):
+    needs_assessment: int
+    value_proposition: int
+    objection_handling: int
+    total: int
+
+
+class SalesEvaluation(BaseModel):
+    speaking_tone_style: SpeakingToneStyle
+    conversation_content: ConversationContent
+    overall_score: int
+    strengths: List[str]
+    improvements: List[str]
+    specific_feedback: str
 
 # Constants
 EVALUATION_FILE_SUFFIX = "*evaluation.prompt.yml"
@@ -217,18 +243,18 @@ class ConversationAnalyzer:
 
             completion = await asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: openai_client.chat.completions.create(
+                lambda: openai_client.beta.chat.completions.parse(
                     model=config["model_deployment_name"],
                     messages=self._build_evaluation_messages(evaluation_prompt),  # pyright: ignore[reportArgumentType]
-                    response_format=self._get_response_format(),  # pyright: ignore[reportArgumentType]
+                    response_format=SalesEvaluation,
                 ),
             )
 
-            if completion.choices[0].message.content:
-                evaluation_json = json.loads(completion.choices[0].message.content)
-                return self._process_evaluation_result(evaluation_json)
+            parsed = completion.choices[0].message.parsed
+            if parsed:
+                return self._process_evaluation_result(parsed.model_dump())
 
-            logger.error("No content received from OpenAI")
+            logger.error("No parsed content received from OpenAI")
             return None
 
         except Exception as e:
@@ -245,72 +271,6 @@ class ConversationAnalyzer:
             },
             {"role": "user", "content": evaluation_prompt},
         ]
-
-    def _get_response_format(self) -> Dict[str, Any]:
-        """Get the structured response format for OpenAI."""
-        return {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "sales_evaluation",
-                "strict": True,
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "speaking_tone_style": {
-                            "type": "object",
-                            "properties": {
-                                "professional_tone": {"type": "integer"},
-                                "active_listening": {"type": "integer"},
-                                "engagement_quality": {"type": "integer"},
-                                "total": {"type": "integer"},
-                            },
-                            "required": [
-                                "professional_tone",
-                                "active_listening",
-                                "engagement_quality",
-                                "total",
-                            ],
-                            "additionalProperties": False,
-                        },
-                        "conversation_content": {
-                            "type": "object",
-                            "properties": {
-                                "needs_assessment": {"type": "integer"},
-                                "value_proposition": {"type": "integer"},
-                                "objection_handling": {"type": "integer"},
-                                "total": {"type": "integer"},
-                            },
-                            "required": [
-                                "needs_assessment",
-                                "value_proposition",
-                                "objection_handling",
-                                "total",
-                            ],
-                            "additionalProperties": False,
-                        },
-                        "overall_score": {"type": "integer"},
-                        "strengths": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                        },
-                        "improvements": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                        },
-                        "specific_feedback": {"type": "string"},
-                    },
-                    "required": [
-                        "speaking_tone_style",
-                        "conversation_content",
-                        "overall_score",
-                        "strengths",
-                        "improvements",
-                        "specific_feedback",
-                    ],
-                    "additionalProperties": False,
-                },
-            },
-        }
 
     def _process_evaluation_result(self, evaluation_json: Dict[str, Any]) -> Dict[str, Any]:
         """Process and validate evaluation results."""

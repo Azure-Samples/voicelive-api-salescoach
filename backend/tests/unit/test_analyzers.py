@@ -88,18 +88,17 @@ class TestConversationAnalyzer:
         assert "EVALUATION CRITERIA" in prompt
         assert "SPEAKING TONE & STYLE" in prompt
 
-    def test_get_response_format(self):
-        """Test getting response format for structured output."""
-        analyzer = ConversationAnalyzer()
-        format_def = analyzer._get_response_format()
+    def test_sales_evaluation_pydantic_model(self):
+        """Test the Pydantic structured output model schema."""
+        from src.services.analyzers import SalesEvaluation
 
-        assert format_def["type"] == "json_schema"
-        assert "sales_evaluation" in format_def["json_schema"]["name"]
-
-        schema = format_def["json_schema"]["schema"]
+        schema = SalesEvaluation.model_json_schema()
         assert "speaking_tone_style" in schema["properties"]
         assert "conversation_content" in schema["properties"]
         assert "overall_score" in schema["properties"]
+        assert "strengths" in schema["properties"]
+        assert "improvements" in schema["properties"]
+        assert "specific_feedback" in schema["properties"]
 
     def test_process_evaluation_result(self):
         """Test processing evaluation results."""
