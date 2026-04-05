@@ -246,8 +246,16 @@ class TestFlaskApp:
             assert response.status_code == 200
             mock_send.assert_called_once_with("static", "audio-processor.js")
 
-    def test_perform_conversation_analysis_exists(self):
-        """Test the _perform_conversation_analysis function can be imported."""
+    def test_perform_conversation_analysis_success(self):
+        """Test the _perform_conversation_analysis function exists and can be imported."""
+        # This is a complex async function, so we just test it can be imported
+        from src.app import _perform_conversation_analysis  # pylint: disable=C0415
+
+        assert callable(_perform_conversation_analysis)
+
+    def test_perform_conversation_analysis_with_exceptions(self):
+        """Test _perform_conversation_analysis function exists."""
+        # This is a complex async function, so we just test it can be imported
         from src.app import _perform_conversation_analysis  # pylint: disable=C0415
 
         assert callable(_perform_conversation_analysis)

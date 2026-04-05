@@ -13,7 +13,17 @@ export interface Scenario {
 }
 
 export interface CustomScenarioData {
-  systemPrompt: string
+  name: string
+  description: string
+  model: string
+  modelParameters: {
+    temperature: number
+    max_tokens: number
+  }
+  messages: Array<{
+    role: 'system' | 'user'
+    content: string
+  }>
 }
 
 export interface CustomScenario extends Scenario {
@@ -70,11 +80,7 @@ export interface AvatarOption {
 }
 
 export const AVATAR_OPTIONS: AvatarOption[] = [
-  {
-    value: 'lisa-casual-sitting',
-    label: 'Lisa (Casual Sitting)',
-    isPhotoAvatar: false,
-  },
+  { value: 'lisa-casual-sitting', label: 'Lisa (Casual Sitting)', isPhotoAvatar: false },
   { value: 'riya', label: 'Riya (Photo)', isPhotoAvatar: true },
   { value: 'simone', label: 'Simone (Photo)', isPhotoAvatar: true },
 ]

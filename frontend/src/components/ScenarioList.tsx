@@ -4,28 +4,22 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-  Button,
-  Card,
-  CardHeader,
-  Divider,
-  Dropdown,
-  Label,
-  Option,
-  Spinner,
-  Text,
-  makeStyles,
-  tokens,
+    Button,
+    Card,
+    CardHeader,
+    Divider,
+    Dropdown,
+    Label,
+    Option,
+    Spinner,
+    Text,
+    makeStyles,
+    tokens,
 } from '@fluentui/react-components'
-import { Edit24Regular } from '@fluentui/react-icons'
+import { Edit24Regular, PersonEdit24Regular } from '@fluentui/react-icons'
 import { useState } from 'react'
 import { api } from '../services/api'
-import {
-  AVATAR_OPTIONS,
-  CustomScenario,
-  CustomScenarioData,
-  DEFAULT_AVATAR,
-  Scenario,
-} from '../types'
+import { AVATAR_OPTIONS, CustomScenario, CustomScenarioData, DEFAULT_AVATAR, Scenario } from '../types'
 import { CustomScenarioEditor } from './CustomScenarioEditor'
 
 const useStyles = makeStyles({
@@ -125,17 +119,8 @@ interface Props {
   onSelect: (id: string) => void
   onStart: (avatarValue: string) => void
   onScenarioGenerated?: (scenario: Scenario) => void
-  onAddCustomScenario: (
-    name: string,
-    description: string,
-    data: CustomScenarioData
-  ) => void
-  onUpdateCustomScenario: (
-    id: string,
-    updates: Partial<
-      Pick<CustomScenario, 'name' | 'description' | 'scenarioData'>
-    >
-  ) => void
+  onAddCustomScenario: (name: string, description: string, data: CustomScenarioData) => void
+  onUpdateCustomScenario: (id: string, updates: Partial<Pick<CustomScenario, 'name' | 'description' | 'scenarioData'>>) => void
   onDeleteCustomScenario: (id: string) => void
 }
 
@@ -185,17 +170,8 @@ export function ScenarioList({
     ? [...scenarios.filter(s => !s.is_graph_scenario), generatedScenario]
     : scenarios
 
-  const handleEditCustomScenario = (
-    scenario: CustomScenario,
-    name: string,
-    description: string,
-    data: CustomScenarioData
-  ) => {
-    onUpdateCustomScenario(scenario.id, {
-      name,
-      description,
-      scenarioData: data,
-    })
+  const handleEditCustomScenario = (scenario: CustomScenario, name: string, description: string, data: CustomScenarioData) => {
+    onUpdateCustomScenario(scenario.id, { name, description, scenarioData: data })
   }
 
   return (
@@ -254,13 +230,18 @@ export function ScenarioList({
       <Divider style={{ marginTop: tokens.spacingVerticalL }} />
 
       <div className={styles.sectionHeader}>
-        <CustomScenarioEditor onSave={onAddCustomScenario} />
+        <Text size={400} weight="semibold">
+          <PersonEdit24Regular className={styles.customIcon} />
+          Your Custom Scenarios
+        </Text>
+        <CustomScenarioEditor
+          onSave={onAddCustomScenario}
+        />
       </div>
 
       {customScenarios.length === 0 ? (
         <Text className={styles.emptyCustom} size={200}>
-          No custom scenarios yet. Create one to practice with your own
-          role-play situations.
+          No custom scenarios yet. Create one to practice with your own role-play situations.
         </Text>
       ) : (
         <div className={styles.cardsGrid}>
@@ -274,23 +255,17 @@ export function ScenarioList({
                 onClick={() => onSelect(scenario.id)}
               >
                 <CardHeader
-                  header={<Text weight="semibold">{scenario.name}</Text>}
+                  header={
+                    <Text weight="semibold">
+                      {scenario.name}
+                    </Text>
+                  }
                   description={<Text size={200}>{scenario.description}</Text>}
                   action={
-                    <div
-                      className={styles.cardActions}
-                      onClick={e => e.stopPropagation()}
-                    >
+                    <div className={styles.cardActions} onClick={e => e.stopPropagation()}>
                       <CustomScenarioEditor
                         scenario={scenario}
-                        onSave={(name, description, data) =>
-                          handleEditCustomScenario(
-                            scenario,
-                            name,
-                            description,
-                            data
-                          )
-                        }
+                        onSave={(name, description, data) => handleEditCustomScenario(scenario, name, description, data)}
                         onDelete={onDeleteCustomScenario}
                         trigger={
                           <Button
@@ -316,10 +291,7 @@ export function ScenarioList({
           <Dropdown
             id="avatar-select"
             className={styles.avatarDropdown}
-            value={
-              AVATAR_OPTIONS.find(opt => opt.value === selectedAvatar)?.label ||
-              ''
-            }
+            value={AVATAR_OPTIONS.find(opt => opt.value === selectedAvatar)?.label || ''}
             selectedOptions={[selectedAvatar]}
             onOptionSelect={(_, data) => {
               if (data.optionValue) {

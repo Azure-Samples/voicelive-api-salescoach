@@ -13,9 +13,11 @@ from typing import Any, Dict, Optional
 import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 from azure.ai.voicelive.aio import (
     ConnectionClosed,
-    ConnectionError as VoiceLiveConnectionError,
     VoiceLiveConnection,
     connect,
+)
+from azure.ai.voicelive.aio import (
+    ConnectionError as VoiceLiveConnectionError,
 )
 from azure.ai.voicelive.models import (
     AudioEchoCancellation,
@@ -28,6 +30,7 @@ from azure.ai.voicelive.models import (
     ServerEventType,
 )
 from azure.core.credentials import AzureKeyCredential
+from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
 
 from src.config import config
 from src.services.managers import AgentManager
@@ -136,13 +139,13 @@ class VoiceProxyHandler:
         resource_name = config["azure_ai_resource_name"]
         return f"https://{resource_name}.{AZURE_COGNITIVE_SERVICES_DOMAIN}"
 
-    def _get_credential(self) -> Optional[AzureKeyCredential]:
+    def _get_credential(self):
         """Get the Azure credential."""
         api_key = config.get("azure_openai_api_key")
-        if not api_key:
-            logger.error("No API key found in configuration (azure_openai_api_key)")
-            return None
-        return AzureKeyCredential(api_key)
+        if api_key:
+            return AzureKeyCredential(api_key)
+        logger.info("No API key found, using DefaultAzureCredential (managed identity)")
+        return AsyncDefaultAzureCredential()
 
     def _get_model(self, agent_config: Optional[Dict[str, Any]]) -> Optional[str]:
         """Get the model name for the connection."""

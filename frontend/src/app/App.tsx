@@ -4,13 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-  Dialog,
-  DialogBody,
-  DialogSurface,
-  Spinner,
-  Text,
-  makeStyles,
-  tokens,
+    Dialog,
+    DialogBody,
+    DialogSurface,
+    Spinner,
+    Text,
+    makeStyles,
+    tokens,
 } from '@fluentui/react-components'
 import { useCallback, useState } from 'react'
 import { AssessmentPanel } from '../components/AssessmentPanel'
@@ -78,7 +78,7 @@ export default function App() {
     updateCustomScenario,
     deleteCustomScenario,
   } = useScenarios()
-  const { playAudio, resetAudio } = useAudioPlayer()
+  const { playAudio } = useAudioPlayer()
   const activeScenario =
     selectedScenarioData ||
     scenarios.find(s => s.id === selectedScenario) ||
@@ -142,22 +142,26 @@ export default function App() {
   const handleStart = async (avatarValue: string) => {
     if (!selectedScenario) return
 
-    resetAudio()
-    clearMessages()
-
     try {
       const avatarConfig = parseAvatarValue(avatarValue)
+
+      // Check if this is a custom scenario
       const customScenario = getCustomScenario(selectedScenario)
 
-      const { agent_id } = customScenario
-        ? await api.createAgentWithCustomScenario(
-            selectedScenario,
-            customScenario.name,
-            customScenario.description,
-            customScenario.scenarioData,
-            avatarConfig
-          )
-        : await api.createAgent(selectedScenario, avatarConfig)
+      let agent_id: string
+      if (customScenario) {
+        // Use the custom scenario API endpoint
+        const result = await api.createAgentWithCustomScenario(
+          selectedScenario,
+          customScenario.scenarioData,
+          avatarConfig
+        )
+        agent_id = result.agent_id
+      } else {
+        // Use the regular server-side scenario
+        const result = await api.createAgent(selectedScenario, avatarConfig)
+        agent_id = result.agent_id
+      }
 
       setCurrentAgent(agent_id)
       setShowSetup(false)
