@@ -3,7 +3,12 @@
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Assessment, AVATAR_OPTIONS, CustomScenarioData, Scenario } from '../types'
+import {
+  Assessment,
+  AVATAR_OPTIONS,
+  CustomScenarioData,
+  Scenario,
+} from '../types'
 
 export interface AvatarConfig {
   character: string

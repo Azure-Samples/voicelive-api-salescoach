@@ -4,27 +4,27 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-    Button,
-    Dialog,
-    DialogActions,
-    DialogBody,
-    DialogContent,
-    DialogSurface,
-    DialogTitle,
-    DialogTrigger,
-    Field,
-    Input,
-    Text,
-    Textarea,
-    makeStyles,
-    tokens,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
+  DialogTrigger,
+  Field,
+  Input,
+  Text,
+  Textarea,
+  makeStyles,
+  tokens,
 } from '@fluentui/react-components'
 import {
-    Add24Regular,
-    ArrowDownload24Regular,
-    ArrowUpload24Regular,
-    Delete24Regular,
-    Edit24Regular,
+  Add24Regular,
+  ArrowDownload24Regular,
+  ArrowUpload24Regular,
+  Delete24Regular,
+  Edit24Regular,
 } from '@fluentui/react-icons'
 import { useRef, useState } from 'react'
 import { customScenarioService } from '../services/customScenarios'
@@ -60,7 +60,11 @@ const useStyles = makeStyles({
 
 interface CustomScenarioEditorProps {
   scenario?: CustomScenario | null
-  onSave: (name: string, description: string, scenarioData: CustomScenarioData) => void
+  onSave: (
+    name: string,
+    description: string,
+    scenarioData: CustomScenarioData
+  ) => void
   onDelete?: (id: string) => void
   trigger?: React.ReactNode
 }
@@ -156,7 +160,7 @@ export function CustomScenarioEditor({
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = e => {
       try {
         const content = e.target?.result as string
         const data = JSON.parse(content) as CustomScenarioData
@@ -230,8 +234,9 @@ export function CustomScenarioEditor({
             </Field>
 
             <Text className={styles.helpText}>
-              The system prompt defines how the AI will behave during the role-play.
-              Include character background, behavioral guidelines, and key topics to address.
+              The system prompt defines how the AI will behave during the
+              role-play. Include character background, behavioral guidelines,
+              and key topics to address.
             </Text>
 
             {error && <Text className={styles.errorText}>{error}</Text>}

@@ -7,11 +7,7 @@ Run with: pytest tests/integration/test_speech_integration.py -v
 """
 
 import asyncio
-import io
 import os
-import wave
-
-import pytest
 
 from tests.conftest import requires_speech
 
@@ -55,23 +51,17 @@ def _synthesize_audio(text: str, region: str) -> bytes:
     import azure.cognitiveservices.speech as speechsdk
 
     speech_config = _get_speech_config_with_auth(region)
-    speech_config.set_speech_synthesis_output_format(
-        speechsdk.SpeechSynthesisOutputFormat.Raw24Khz16BitMonoPcm
-    )
+    speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Raw24Khz16BitMonoPcm)
     speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
 
-    synthesizer = speechsdk.SpeechSynthesizer(
-        speech_config=speech_config, audio_config=None
-    )
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
     result = synthesizer.speak_text_async(text).get()
 
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
         return result.audio_data
     elif result.reason == speechsdk.ResultReason.Canceled:
         details = result.cancellation_details
-        raise RuntimeError(
-            f"Speech synthesis canceled: {details.reason}, {details.error_details}"
-        )
+        raise RuntimeError(f"Speech synthesis canceled: {details.reason}, {details.error_details}")
     else:
         raise RuntimeError(f"Speech synthesis failed: {result.reason}")
 
@@ -150,22 +140,16 @@ class TestSpeechSDKIntegration:
         result = recognizer.recognize_once()
 
         # Step 5: Verify results
-        assert result.reason == speechsdk.ResultReason.RecognizedSpeech, (
-            f"Expected RecognizedSpeech, got {result.reason}"
-        )
+        assert (
+            result.reason == speechsdk.ResultReason.RecognizedSpeech
+        ), f"Expected RecognizedSpeech, got {result.reason}"
 
         pron_result = speechsdk.PronunciationAssessmentResult(result)
 
         # TTS-generated audio should score very high on pronunciation
-        assert pron_result.accuracy_score >= 70, (
-            f"Accuracy score {pron_result.accuracy_score} too low for TTS audio"
-        )
-        assert pron_result.fluency_score >= 60, (
-            f"Fluency score {pron_result.fluency_score} too low"
-        )
-        assert pron_result.pronunciation_score >= 60, (
-            f"Pronunciation score {pron_result.pronunciation_score} too low"
-        )
+        assert pron_result.accuracy_score >= 70, f"Accuracy score {pron_result.accuracy_score} too low for TTS audio"
+        assert pron_result.fluency_score >= 60, f"Fluency score {pron_result.fluency_score} too low"
+        assert pron_result.pronunciation_score >= 60, f"Pronunciation score {pron_result.pronunciation_score} too low"
 
     def test_pronunciation_assessor_class_integration(self, azure_env):
         """Test the PronunciationAssessor class audio preparation and result building.

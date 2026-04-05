@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 # --- Pydantic models for structured evaluation output ---
 
+
 class SpeakingToneStyle(BaseModel):
     professional_tone: int
     active_listening: int
@@ -49,6 +50,7 @@ class SalesEvaluation(BaseModel):
     strengths: List[str]
     improvements: List[str]
     specific_feedback: str
+
 
 # Constants
 EVALUATION_FILE_SUFFIX = "*evaluation.prompt.yml"

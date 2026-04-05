@@ -74,18 +74,14 @@ class TestHealthAndConfig:
             pytest.skip("No predefined scenarios available")
 
         scenario_id = non_graph_scenarios[0]["id"]
-        resp = requests.get(
-            f"{_get_service_uri()}/api/scenarios/{scenario_id}", timeout=15
-        )
+        resp = requests.get(f"{_get_service_uri()}/api/scenarios/{scenario_id}", timeout=15)
         assert resp.status_code == 200
         data = resp.json()
         assert "messages" in data or "name" in data
 
     def test_nonexistent_scenario_returns_404(self):
         """Test requesting a nonexistent scenario returns 404."""
-        resp = requests.get(
-            f"{_get_service_uri()}/api/scenarios/this-does-not-exist", timeout=15
-        )
+        resp = requests.get(f"{_get_service_uri()}/api/scenarios/this-does-not-exist", timeout=15)
         assert resp.status_code == 404
 
 
@@ -116,9 +112,7 @@ class TestAgentLifecycle:
         agent_id = data["agent_id"]
 
         # Cleanup: delete the agent
-        del_resp = requests.delete(
-            f"{_get_service_uri()}/api/agents/{agent_id}", timeout=15
-        )
+        del_resp = requests.delete(f"{_get_service_uri()}/api/agents/{agent_id}", timeout=15)
         assert del_resp.status_code == 200
 
     def test_create_agent_with_custom_scenario(self):
@@ -127,11 +121,7 @@ class TestAgentLifecycle:
             "id": "e2e-test-custom",
             "name": "E2E Test Custom Scenario",
             "description": "Custom scenario for e2e testing",
-            "messages": [
-                {
-                    "content": "You are a helpful test assistant. Keep responses very short."
-                }
-            ],
+            "messages": [{"content": "You are a helpful test assistant. Keep responses very short."}],
             "model": _get_model_name(),
             "modelParameters": {"temperature": 0.5, "max_tokens": 200},
         }
@@ -146,9 +136,7 @@ class TestAgentLifecycle:
         assert "agent_id" in data
 
         # Cleanup
-        requests.delete(
-            f"{_get_service_uri()}/api/agents/{data['agent_id']}", timeout=15
-        )
+        requests.delete(f"{_get_service_uri()}/api/agents/{data['agent_id']}", timeout=15)
 
     def test_create_agent_missing_scenario_returns_400(self):
         """Test creating an agent with no scenario_id returns 400."""
@@ -261,9 +249,7 @@ class TestWebSocketVoice:
                         break
 
                 # Cleanup
-                requests.delete(
-                    f"{service_uri}/api/agents/{agent_id}", timeout=15
-                )
+                requests.delete(f"{service_uri}/api/agents/{agent_id}", timeout=15)
 
                 assert connected, "Failed to establish WebSocket voice proxy connection"
 
@@ -294,11 +280,7 @@ class TestWebSocketVoice:
         custom_scenario = {
             "id": "e2e-voice-test",
             "name": "Voice E2E Test",
-            "messages": [
-                {
-                    "content": "You are a test assistant. Reply with exactly one short sentence."
-                }
-            ],
+            "messages": [{"content": "You are a test assistant. Reply with exactly one short sentence."}],
             "model": _get_model_name(),
             "modelParameters": {"temperature": 0.3, "max_tokens": 100},
         }
@@ -313,12 +295,8 @@ class TestWebSocketVoice:
         received_events = []
         try:
             # Step 2: Connect WebSocket
-            ws_uri = service_uri.replace("https://", "wss://").replace(
-                "http://", "ws://"
-            )
-            with ws_client.connect(
-                f"{ws_uri}/ws/voice", open_timeout=15, close_timeout=5
-            ) as ws:
+            ws_uri = service_uri.replace("https://", "wss://").replace("http://", "ws://")
+            with ws_client.connect(f"{ws_uri}/ws/voice", open_timeout=15, close_timeout=5) as ws:
                 # Send session update
                 ws.send(
                     json.dumps(
@@ -343,20 +321,14 @@ class TestWebSocketVoice:
                 # Step 3: Synthesize audio
                 import azure.cognitiveservices.speech as speechsdk
 
-                speech_config = speechsdk.SpeechConfig(
-                    subscription=speech_key, region=speech_region
-                )
+                speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
                 speech_config.set_speech_synthesis_output_format(
                     speechsdk.SpeechSynthesisOutputFormat.Raw24Khz16BitMonoPcm
                 )
                 speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
-                synthesizer = speechsdk.SpeechSynthesizer(
-                    speech_config=speech_config, audio_config=None
-                )
+                synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
                 result = synthesizer.speak_text_async("Hello, can you hear me?").get()
-                assert (
-                    result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted
-                )
+                assert result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted
                 pcm_audio = result.audio_data
 
                 # Step 4: Send audio as input_audio_buffer.append
@@ -364,11 +336,7 @@ class TestWebSocketVoice:
                 for i in range(0, len(pcm_audio), chunk_size):
                     chunk = pcm_audio[i : i + chunk_size]
                     encoded = base64.b64encode(chunk).decode("utf-8")
-                    ws.send(
-                        json.dumps(
-                            {"type": "input_audio_buffer.append", "audio": encoded}
-                        )
-                    )
+                    ws.send(json.dumps({"type": "input_audio_buffer.append", "audio": encoded}))
 
                 # Signal end of audio
                 ws.send(json.dumps({"type": "input_audio_buffer.commit"}))
@@ -394,15 +362,10 @@ class TestWebSocketVoice:
 
         finally:
             # Cleanup agent
-            requests.delete(
-                f"{service_uri}/api/agents/{agent_id}", timeout=15
-            )
+            requests.delete(f"{service_uri}/api/agents/{agent_id}", timeout=15)
 
         # Verify we got some response from the service
-        assert len(received_events) > 1, (
-            f"Expected multiple events, got: {received_events}"
-        )
+        assert len(received_events) > 1, f"Expected multiple events, got: {received_events}"
         assert any(
-            t in received_events
-            for t in ("proxy.connected", "session.created")
+            t in received_events for t in ("proxy.connected", "session.created")
         ), f"No connection event in: {received_events}"

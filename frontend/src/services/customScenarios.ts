@@ -36,7 +36,11 @@ export const customScenarioService = {
   /**
    * Save a new custom scenario
    */
-  save(name: string, description: string, scenarioData: CustomScenarioData): CustomScenario {
+  save(
+    name: string,
+    description: string,
+    scenarioData: CustomScenarioData
+  ): CustomScenario {
     const scenarios = this.getAll()
     const now = new Date().toISOString()
     const id = `custom-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
@@ -59,7 +63,12 @@ export const customScenarioService = {
   /**
    * Update an existing custom scenario
    */
-  update(id: string, updates: Partial<Pick<CustomScenario, 'name' | 'description' | 'scenarioData'>>): CustomScenario | null {
+  update(
+    id: string,
+    updates: Partial<
+      Pick<CustomScenario, 'name' | 'description' | 'scenarioData'>
+    >
+  ): CustomScenario | null {
     const scenarios = this.getAll()
     const index = scenarios.findIndex(s => s.id === id)
 
@@ -101,7 +110,11 @@ export const customScenarioService = {
   /**
    * Import a scenario from JSON data
    */
-  import(name: string, description: string, jsonData: string): CustomScenario | null {
+  import(
+    name: string,
+    description: string,
+    jsonData: string
+  ): CustomScenario | null {
     try {
       const scenarioData = JSON.parse(jsonData) as CustomScenarioData
 

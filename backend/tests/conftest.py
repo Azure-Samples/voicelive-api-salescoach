@@ -9,9 +9,7 @@ def _load_azd_env():
 
     Must run at import time so pytest markers can evaluate skip conditions.
     """
-    env_file = os.path.join(
-        os.path.dirname(__file__), "..", "..", ".azure", "newtest", ".env"
-    )
+    env_file = os.path.join(os.path.dirname(__file__), "..", "..", ".azure", "newtest", ".env")
     if os.path.exists(env_file):
         with open(env_file, encoding="utf-8") as f:
             for line in f:

@@ -4,13 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {
-    Dialog,
-    DialogBody,
-    DialogSurface,
-    Spinner,
-    Text,
-    makeStyles,
-    tokens,
+  Dialog,
+  DialogBody,
+  DialogSurface,
+  Spinner,
+  Text,
+  makeStyles,
+  tokens,
 } from '@fluentui/react-components'
 import { useCallback, useState } from 'react'
 import { AssessmentPanel } from '../components/AssessmentPanel'
