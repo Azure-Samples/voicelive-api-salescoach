@@ -34,6 +34,8 @@ urlFragment: voicelive-api-salescoach
 
 Voice Live API Salescoach is a demo application showcasing how AI-based training could be used in sales education using Azure AI services. Practice real-world sales scenarios with AI-powered virtual customers, receive instant feedback on your performance, and improve your sales skills through immersive voice conversations.
 
+> **Related project:** [Live Voice Practice](https://github.com/Azure/live-voice-practice) is a fork of this repository that extends it with a secure private-cloud deployment scenario and a broader call-center agent training use case.
+
 ### Features
 
 - **Real-time Voice Conversations** - Practice sales calls with AI agents that respond naturally using Azure Voice Live API
