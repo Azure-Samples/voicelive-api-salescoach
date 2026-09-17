@@ -15,10 +15,10 @@ jobs:
         python-version: ['3.11', '3.12']
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -53,13 +53,13 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22, 24]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -68,7 +68,7 @@ jobs:
     - name: Install Node.js dependencies
       working-directory: ./frontend
       run: |
-        npm install
+        npm ci --legacy-peer-deps
 
     - name: Lint TypeScript code
       working-directory: ./frontend

@@ -17,7 +17,6 @@ DEFAULT_PORT = 8000
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_REGION = "swedencentral"
 DEFAULT_MODEL = "gpt-4.1-mini"
-DEFAULT_API_VERSION = "2025-04-01-preview"
 DEFAULT_SPEECH_LANGUAGE = "en-US"
 DEFAULT_INPUT_TRANSCRIPTION_MODEL = "azure-speech"
 DEFAULT_INPUT_NOISE_REDUCTION_TYPE = "azure_deep_noise_suppression"
@@ -43,6 +42,8 @@ class Config:
             "project_endpoint": os.getenv("PROJECT_ENDPOINT", ""),
             "use_azure_ai_agents": self._parse_bool_env("USE_AZURE_AI_AGENTS"),
             "agent_id": os.getenv("AGENT_ID", ""),
+            "agent_name": os.getenv("AGENT_NAME", ""),
+            "agent_version": os.getenv("AGENT_VERSION", ""),
             "port": int(os.getenv("PORT", str(DEFAULT_PORT))),
             "host": os.getenv("HOST", DEFAULT_HOST),
             "azure_openai_endpoint": os.getenv("AZURE_OPENAI_ENDPOINT", ""),
@@ -54,7 +55,6 @@ class Config:
             "azure_speech_region": os.getenv("AZURE_SPEECH_REGION", DEFAULT_REGION),
             "azure_speech_endpoint": os.getenv("AZURE_SPEECH_ENDPOINT", ""),
             "azure_speech_language": os.getenv("AZURE_SPEECH_LANGUAGE", DEFAULT_SPEECH_LANGUAGE),
-            "api_version": DEFAULT_API_VERSION,
             # NEW ADDITIONS
             "azure_input_transcription_model": os.getenv(
                 "AZURE_INPUT_TRANSCRIPTION_MODEL", DEFAULT_INPUT_TRANSCRIPTION_MODEL

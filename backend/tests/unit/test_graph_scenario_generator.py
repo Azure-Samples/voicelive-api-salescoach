@@ -2,6 +2,8 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from src.services.graph_scenario_generator import GraphScenarioGenerator
 
 
@@ -19,19 +21,33 @@ class TestGraphScenarioGenerator:
         generator = GraphScenarioGenerator()
         assert generator.openai_client is None
 
-    @patch("src.services.graph_scenario_generator.AzureOpenAI")
+    @pytest.mark.parametrize("endpoint", ["https://test.openai.azure.com", "https://test.openai.azure.com/"])
+    @patch("src.services.graph_scenario_generator.OpenAI")
     @patch("src.services.graph_scenario_generator.config")
-    def test_initialization_success(self, mock_config, mock_azure_openai):
+    def test_initialization_success(self, mock_config, mock_openai, endpoint):
         """Test successful initialization with proper config."""
         mock_config.__getitem__.side_effect = lambda key: {
-            "azure_openai_endpoint": "https://test.openai.azure.com",
+            "azure_openai_endpoint": endpoint,
             "azure_openai_api_key": "test-key",
-            "api_version": "2024-02-01",
         }.get(key, "test-value")
 
         generator = GraphScenarioGenerator()
         assert generator.openai_client is not None
-        mock_azure_openai.assert_called_once()
+        mock_openai.assert_called_once_with(base_url="https://test.openai.azure.com/openai/v1/", api_key="test-key")
+
+    @patch("src.services.graph_scenario_generator.get_bearer_token_provider")
+    @patch("src.services.graph_scenario_generator.OpenAI")
+    @patch("src.services.graph_scenario_generator.config")
+    def test_initialization_managed_identity(self, mock_config, mock_openai, mock_provider):
+        mock_config.__getitem__.side_effect = {
+            "azure_openai_endpoint": "https://test.openai.azure.com/",
+            "azure_openai_api_key": "",
+        }.__getitem__
+        GraphScenarioGenerator()
+        assert mock_provider.call_args.args[1] == "https://ai.azure.com/.default"
+        mock_openai.assert_called_once_with(
+            base_url="https://test.openai.azure.com/openai/v1/", api_key=mock_provider.return_value
+        )
 
     @patch("src.services.graph_scenario_generator.config")
     def test_initialization_exception(self, mock_config):

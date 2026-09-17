@@ -188,7 +188,9 @@ Respond naturally as this character would, maintaining a professional tone.`,
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scenarios))
     } catch (error) {
       console.error('Failed to persist custom scenarios:', error)
-      throw new Error('Failed to save scenario. Storage may be full.')
+      throw new Error('Failed to save scenario. Storage may be full.', {
+        cause: error,
+      })
     }
   },
 }

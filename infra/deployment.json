@@ -51,13 +51,6 @@
             "metadata": {
                 "description": "Azure OpenAI Model Capacity"
             }
-        },
-        "embeddingModelCapacity": {
-            "type": "int",
-            "defaultValue": 10,
-            "metadata": {
-                "description": "Azure OpenAI Embedding Model Capacity"
-            }
         }
     },
     "variables": {
@@ -110,9 +103,6 @@
                     },
                     "gptCapacity": {
                         "value": "[parameters('openAiModelCapacity')]"
-                    },
-                    "embeddingCapacity": {
-                        "value": "[parameters('embeddingModelCapacity')]"
                     }
                 },
                 "template": {
@@ -138,9 +128,6 @@
                             "type": "string"
                         },
                         "gptCapacity": {
-                            "type": "int"
-                        },
-                        "embeddingCapacity": {
                             "type": "int"
                         }
                     },
@@ -181,26 +168,6 @@
                             },
                             "dependsOn": [
                                 "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]"
-                            ]
-                        },
-                        {
-                            "type": "Microsoft.CognitiveServices/accounts/deployments",
-                            "apiVersion": "2024-10-01",
-                            "name": "[format('{0}/text-embedding-3-small', parameters('name'))]",
-                            "sku": {
-                                "name": "Standard",
-                                "capacity": "[parameters('embeddingCapacity')]"
-                            },
-                            "properties": {
-                                "model": {
-                                    "format": "OpenAI",
-                                    "name": "text-embedding-3-small"
-                                },
-                                "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
-                            },
-                            "dependsOn": [
-                                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
-                                "[resourceId('Microsoft.CognitiveServices/accounts/deployments', parameters('name'), parameters('gptDeploymentName'))]"
                             ]
                         }
                     ],
