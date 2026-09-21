@@ -31,14 +31,6 @@ param openAiModelDeployments array = [
       capacity: 10
     }
   }
-  {
-    name: 'text-embedding-3-small'
-    model: 'text-embedding-3-small'
-    sku: {
-      name: 'Standard'
-      capacity: 10
-    }
-  }
 ]
 
 resource aiFoundryResource 'Microsoft.CognitiveServices/accounts@2024-10-01' = {

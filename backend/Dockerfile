@@ -1,8 +1,6 @@
-FROM node:20-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app
-
-RUN npm config set strict-ssl false
 
 COPY frontend/package*.json ./
 RUN npm ci --legacy-peer-deps --include=dev
@@ -19,14 +17,13 @@ COPY frontend/.prettierignore ./
 
 RUN npx --yes tsc && npx --yes vite build
 
-# Stage 2: Python runtime (using Ubuntu 20.04 base to avoid OpenSSL 3 issues with speechsdk)
-FROM python:3.11-slim-bullseye
+# Stage 2: Python runtime
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=src/app.py \
     FLASK_ENV=production \
-    PIP_TRUSTED_HOST="pypi.org files.pythonhosted.org pypi.python.org" \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONPATH=/app
 
@@ -43,7 +40,7 @@ RUN useradd --create-home --shell /bin/bash app
 WORKDIR /app
 
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=app:app backend/src/ ./src/
 COPY --chown=app:app data/scenarios/ ./data/scenarios/

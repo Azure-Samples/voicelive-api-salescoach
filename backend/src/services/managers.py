@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import PromptAgentDefinition
 from azure.identity import DefaultAzureCredential
 
 from src.config import config
@@ -177,10 +178,12 @@ CRITICAL INTERACTION GUIDELINES:
 
     def _initialize_project_client(self) -> Optional[AIProjectClient]:
         """Initialize the Azure AI Project client."""
+        if not self.use_azure_ai_agents:
+            return None
         try:
             project_endpoint = config["project_endpoint"]
             if not project_endpoint:
-                logger.warning("PROJECT_ENDPOINT not configured - falling back to instruction-based approach")
+                logger.error("PROJECT_ENDPOINT is required when USE_AZURE_AI_AGENTS is enabled")
                 return None
 
             client = AIProjectClient(
@@ -218,7 +221,7 @@ CRITICAL INTERACTION GUIDELINES:
         temperature = scenario_data.get("modelParameters", {}).get("temperature", 0.7)
         max_tokens = scenario_data.get("modelParameters", {}).get("max_tokens", 2000)
 
-        if self.use_azure_ai_agents and self.project_client:
+        if self.use_azure_ai_agents:
             agent_id = self._create_azure_agent(scenario_id, combined_instructions, model_name, temperature, max_tokens)
         else:
             agent_id = self._create_local_agent(scenario_id, combined_instructions, model_name, temperature, max_tokens)
@@ -239,35 +242,35 @@ CRITICAL INTERACTION GUIDELINES:
         """Create an agent using Azure AI Agent Service."""
 
         if not self.project_client:
-            logger.warning("Project client not available, using fallback scenario")
-            return ""
+            raise RuntimeError("Foundry project client is not available")
         project_client = self.project_client
 
         try:
-            with project_client:
-                agent_name = self._generate_agent_name(scenario_id)
-                agent = project_client.agents.create_agent(
+            agent_name = self._generate_agent_name(scenario_id)
+            agent = project_client.agents.create_version(
+                agent_name=agent_name,
+                definition=PromptAgentDefinition(
                     model=model,
-                    name=agent_name,
                     instructions=instructions,
                     tools=[],
                     temperature=temperature,
-                )
+                ),
+            )
 
-                agent_id = agent.id
-                logger.info("Created Azure AI agent: %s", agent_id)
-
-                self.agents[agent_id] = self._create_agent_config(
-                    scenario_id=scenario_id,
-                    agent_id=agent_id,
-                    is_azure_agent=True,
-                    instructions=instructions,
-                    model=model,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
-
-                return agent_id
+            agent_id = agent.name
+            logger.info("Created Foundry agent: %s (version %s)", agent_id, agent.version)
+            self.agents[agent_id] = self._create_agent_config(
+                scenario_id=scenario_id,
+                agent_id=agent_id,
+                is_azure_agent=True,
+                instructions=instructions,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            self.agents[agent_id]["azure_agent_name"] = agent.name
+            self.agents[agent_id]["azure_agent_version"] = agent.version
+            return agent_id
 
         except Exception as e:
             logger.error("Error creating Azure agent: %s", e)
@@ -361,15 +364,14 @@ CRITICAL INTERACTION GUIDELINES:
             if agent_id in self.agents:
                 agent_config = self.agents[agent_id]
 
-                if agent_config.get("is_azure_agent") and self.project_client:
-                    try:
-                        with self.project_client:
-                            self.project_client.agents.delete_agent(agent_id)
-                            logger.info("Deleted Azure AI agent: %s", agent_id)
-                    except Exception as e:
-                        logger.error("Error deleting Azure agent: %s", e)
+                if agent_config.get("is_azure_agent"):
+                    if not self.project_client:
+                        raise RuntimeError("Foundry project client is not available")
+                    self.project_client.agents.delete(agent_name=agent_config["azure_agent_name"])
+                    logger.info("Deleted Foundry agent: %s", agent_id)
 
                 del self.agents[agent_id]
                 logger.info("Deleted agent from local storage: %s", agent_id)
         except Exception as e:
             logger.error("Error deleting agent %s: %s", agent_id, e)
+            raise

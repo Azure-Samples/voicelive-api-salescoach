@@ -1,11 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 
 echo "🧹 Cleaning previous build..."
-rm -rf frontend/static backend/static frontend/node_modules frontend/package-lock.json
+rm -rf frontend/static backend/static
 
 echo "📦 Installing frontend dependencies..."
 cd frontend
-npm install --legacy-peer-deps
+npm ci --legacy-peer-deps
 
 echo "🔨 Building React app..."
 npm run build

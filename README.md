@@ -65,6 +65,22 @@ https://github.com/user-attachments/assets/904f1555-6981-4780-ae64-c5757337bcad
 
 ### Deploy to Azure
 
+The deployment creates Azure AI and Speech resources and a Container App. It deploys
+`gpt-4.1-mini` for conversation analysis and scenario generation. The app does not
+require an embedding model. Select a region that supports Voice Live and the model
+deployment, such as Sweden Central, and confirm that your subscription has enough
+model quota.
+The container builds the frontend with Node.js 24 LTS and uses Python 3.11 on
+Debian 12 (Bookworm), which the Speech SDK supports.
+Container builds verify HTTPS certificates when downloading npm and Python packages.
+If your network uses a private certificate authority, configure its trusted CA
+certificate instead of disabling verification.
+
+The application uses Voice Live SDK 1.3 with the GA `2026-07-15` API, Speech SDK
+1.51, and OpenAI SDK 3 with the GA `/openai/v1/` endpoint. Azure OpenAI keys and
+Microsoft Entra ID authentication are supported. Token authentication refreshes
+credentials automatically.
+
 1. **Deploy to Azure**:
    ```bash
    azd up
@@ -75,6 +91,12 @@ https://github.com/user-attachments/assets/904f1555-6981-4780-ae64-c5757337bcad
 ### Local Development
 
 This project includes a dev container for easy setup and a build script for  development.
+For development without a container, use Python 3.11 or 3.12 and Node.js 24 LTS.
+The build script installs the committed npm lockfile with `npm ci`; it does not
+delete or regenerate the lockfile.
+TypeScript 7 compiles the frontend. Microsoft's TypeScript 6 compatibility package
+provides the JavaScript compiler API required by the current ESLint parser, using
+the [official side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/).
 
 1. **Use Dev Container** (Recommended)
    - Open in VS Code and select "Reopen in Container" when prompted
@@ -94,6 +116,26 @@ This project includes a dev container for easy setup and a build script for  dev
    ```
 
 Visit `http://localhost:8000` to start training!
+
+### Optional Foundry agents
+
+Instruction-based scenarios remain the default. To use Foundry agents, set
+`USE_AZURE_AI_AGENTS=true` and `PROJECT_ENDPOINT` to an existing Foundry project
+endpoint, such as `https://<resource>.services.ai.azure.com/api/projects/<project>`.
+The deployment templates do not create this project. The application identity
+must have the required Foundry access, and scenario models must be deployed in
+that project.
+
+The application creates prompt-agent versions with Projects SDK 2 and connects
+Voice Live to the returned agent name and version. Agent connections use
+Microsoft Entra ID, even when an OpenAI API key is configured. For connections
+without a scenario agent, `AGENT_NAME` selects an existing agent and
+`AGENT_VERSION` optionally selects its version. `AZURE_AI_PROJECT_NAME` is
+inferred from the project endpoint when omitted. `AGENT_ID` remains available for
+legacy agents and is not required for newly created agents.
+
+See the [Microsoft Learn Foundry voice-agent quickstart](https://learn.microsoft.com/azure/ai-services/speech-service/voice-live-agents-quickstart)
+for project and role setup.
 
 ## Architecture
 

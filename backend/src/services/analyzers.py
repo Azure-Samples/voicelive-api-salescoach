@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 import azure.cognitiveservices.speech as speechsdk  # pyright: ignore[reportMissingTypeStubs]
 import yaml
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from openai import AzureOpenAI
+from openai import OpenAI
 from pydantic import BaseModel
 
 from src.config import config
@@ -132,12 +132,12 @@ class ConversationAnalyzer:
         logger.info("Total evaluation scenarios loaded: %s", len(scenarios))
         return scenarios
 
-    def _initialize_openai_client(self) -> Optional[AzureOpenAI]:
+    def _initialize_openai_client(self) -> Optional[OpenAI]:
         """
         Initialize the Azure OpenAI client.
 
         Returns:
-            Optional[AzureOpenAI]: Initialized client or None if configuration missing
+            Optional[OpenAI]: Initialized client or None if configuration missing
         """
         try:
             endpoint = config["azure_openai_endpoint"]
@@ -147,21 +147,10 @@ class ConversationAnalyzer:
                 logger.error("Azure OpenAI endpoint not configured")
                 return None
 
-            if api_key:
-                client = AzureOpenAI(
-                    api_version=config["api_version"],
-                    azure_endpoint=endpoint,
-                    api_key=api_key,
-                )
-            else:
-                token_provider = get_bearer_token_provider(
-                    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
-                )
-                client = AzureOpenAI(
-                    api_version=config["api_version"],
-                    azure_endpoint=endpoint,
-                    azure_ad_token_provider=token_provider,
-                )
+            client = OpenAI(
+                base_url=f"{endpoint.rstrip('/')}/openai/v1/",
+                api_key=api_key or get_bearer_token_provider(DefaultAzureCredential(), "https://ai.azure.com/.default"),
+            )
 
             logger.info("ConversationAnalyzer initialized with endpoint: %s", endpoint)
             return client
@@ -245,7 +234,7 @@ class ConversationAnalyzer:
 
             completion = await asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: openai_client.beta.chat.completions.parse(
+                lambda: openai_client.chat.completions.parse(
                     model=config["model_deployment_name"],
                     messages=self._build_evaluation_messages(evaluation_prompt),  # pyright: ignore[reportArgumentType]
                     response_format=SalesEvaluation,

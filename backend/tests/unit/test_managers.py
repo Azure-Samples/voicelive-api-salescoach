@@ -3,9 +3,11 @@
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, create_autospec, patch
 
+import pytest
 import yaml
+from azure.ai.projects.operations import AgentsOperations
 
 from src.services.managers import AgentManager, ScenarioManager
 
@@ -135,12 +137,14 @@ class TestAgentManager:
 
         # Mock AI Project Client with context manager support
         mock_client_instance = MagicMock()
+        mock_client_instance.agents = create_autospec(AgentsOperations, instance=True)
         mock_client_instance.__enter__ = Mock(return_value=mock_client_instance)
         mock_client_instance.__exit__ = Mock(return_value=None)
 
         mock_agent = Mock()
-        mock_agent.id = "test-azure-agent-id"
-        mock_client_instance.agents.create_agent.return_value = mock_agent
+        mock_agent.name = "test-azure-agent-id"
+        mock_agent.version = "1"
+        mock_client_instance.agents.create_version.return_value = mock_agent
         mock_ai_client.return_value = mock_client_instance
 
         # Create agent manager with Azure AI enabled
@@ -163,6 +167,14 @@ class TestAgentManager:
         assert agent_config["model"] == "gpt-4o"
         assert agent_config["temperature"] == 0.8
         assert agent_config["max_tokens"] == 1500
+        assert agent_config["azure_agent_name"] == "test-azure-agent-id"
+        assert agent_config["azure_agent_version"] == "1"
+        definition = mock_client_instance.agents.create_version.call_args.kwargs["definition"].as_dict()
+        assert definition["kind"] == "prompt"
+        assert definition["model"] == "gpt-4o"
+        assert definition["temperature"] == 0.8
+        assert definition["instructions"] == "Test instructions" + agent_manager.BASE_INSTRUCTIONS
+        mock_client_instance.__exit__.assert_not_called()
 
     def test_get_agent_existing(self):
         """Test getting an existing agent."""
@@ -228,6 +240,7 @@ class TestAgentManager:
 
         # Mock AI Project Client with context manager support
         mock_client_instance = MagicMock()
+        mock_client_instance.agents = create_autospec(AgentsOperations, instance=True)
         mock_client_instance.__enter__ = Mock(return_value=mock_client_instance)
         mock_client_instance.__exit__ = Mock(return_value=None)
         mock_ai_client.return_value = mock_client_instance
@@ -247,6 +260,8 @@ class TestAgentManager:
             "temperature": 0.7,
             "max_tokens": 2000,
             "azure_agent_id": agent_id,
+            "azure_agent_name": agent_id,
+            "azure_agent_version": "1",
         }
 
         # Delete the agent
@@ -254,9 +269,26 @@ class TestAgentManager:
 
         # Verify deletion
         assert agent_id not in agent_manager.agents
-        mock_client_instance.agents.delete_agent.assert_called_once_with(agent_id)
+        mock_client_instance.agents.delete.assert_called_once_with(agent_name=agent_id)
         agent_manager.delete_agent(agent_id)
 
         # Verify deletion
         assert agent_id not in agent_manager.agents
-        mock_client_instance.agents.delete_agent.assert_called_once_with(agent_id)
+        mock_client_instance.agents.delete.assert_called_once_with(agent_name=agent_id)
+        mock_client_instance.__exit__.assert_not_called()
+
+    def test_failed_azure_deletion_preserves_agent_for_retry(self):
+        manager = self.agent_manager
+        manager.project_client = Mock()
+        manager.project_client.agents.delete.side_effect = RuntimeError("Foundry unavailable")
+        manager.agents["agent-test"] = {"is_azure_agent": True, "azure_agent_name": "agent-test"}
+        with pytest.raises(RuntimeError, match="Foundry unavailable"):
+            manager.delete_agent("agent-test")
+        assert "agent-test" in manager.agents
+
+    def test_enabled_foundry_without_client_does_not_create_local_agent(self):
+        manager = self.agent_manager
+        manager.use_azure_ai_agents = True
+        with pytest.raises(RuntimeError, match="Foundry project client"):
+            manager.create_agent("scenario", {"messages": [{"content": "Test scenario"}]})
+        assert not manager.agents

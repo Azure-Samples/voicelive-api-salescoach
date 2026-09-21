@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 from typing import Any, Dict, Optional
+from urllib.parse import urlsplit
 
 import simple_websocket.ws  # pyright: ignore[reportMissingTypeStubs]
 from azure.ai.voicelive.aio import (
@@ -23,6 +24,8 @@ from azure.ai.voicelive.models import (
     AudioEchoCancellation,
     AudioNoiseReduction,
     AvatarConfig,
+    AvatarConfigTypes,
+    AvatarOutputProtocol,
     AzureSemanticVad,
     AzureStandardVoice,
     Modality,
@@ -38,7 +41,7 @@ from src.services.managers import AgentManager
 logger = logging.getLogger(__name__)
 
 # WebSocket constants
-AZURE_VOICE_API_VERSION = "2025-05-01-preview"
+AZURE_VOICE_API_VERSION = "2026-07-15"
 AZURE_COGNITIVE_SERVICES_DOMAIN = "cognitiveservices.azure.com"
 
 # Session configuration defaults
@@ -79,15 +82,17 @@ class VoiceProxyHandler:
             client_ws: The client WebSocket connection
         """
         current_agent_id = None
+        credential: AzureKeyCredential | AsyncDefaultAzureCredential | None = None
 
         try:
             current_agent_id = await self._get_agent_id_from_client(client_ws)
             agent_config = self.agent_manager.get_agent(current_agent_id) if current_agent_id else None
 
             endpoint = self._build_endpoint()
-            credential = self._get_credential()
             model = self._get_model(agent_config)
             query_params = self._build_query_params(current_agent_id, agent_config)
+            agent_params = self._build_agent_connection_params(agent_config)
+            credential = self._get_credential(use_agent=bool(agent_params or query_params))
 
             if not credential:
                 await self._send_error(client_ws, "No API key found in configuration")
@@ -99,6 +104,7 @@ class VoiceProxyHandler:
                 model=model,
                 api_version=AZURE_VOICE_API_VERSION,
                 query=query_params,
+                **agent_params,
             ) as azure_conn:
                 logger.info("Connected to Azure Voice API via SDK with agent: %s", current_agent_id or "default")
 
@@ -118,6 +124,9 @@ class VoiceProxyHandler:
         except Exception as e:
             logger.error("Proxy error: %s", e)
             await self._send_error(client_ws, str(e))
+        finally:
+            if isinstance(credential, AsyncDefaultAzureCredential):
+                await credential.close()
 
     async def _get_agent_id_from_client(self, client_ws: simple_websocket.ws.Server) -> Optional[str]:
         """Get agent ID from initial client message."""
@@ -139,12 +148,12 @@ class VoiceProxyHandler:
         resource_name = config["azure_ai_resource_name"]
         return f"https://{resource_name}.{AZURE_COGNITIVE_SERVICES_DOMAIN}"
 
-    def _get_credential(self):
+    def _get_credential(self, *, use_agent: bool = False) -> AzureKeyCredential | AsyncDefaultAzureCredential:
         """Get the Azure credential."""
         api_key = config.get("azure_openai_api_key")
-        if api_key:
+        if api_key and not use_agent:
             return AzureKeyCredential(api_key)
-        logger.info("No API key found, using DefaultAzureCredential (managed identity)")
+        logger.info("Using DefaultAzureCredential (managed identity) for Voice Live")
         return AsyncDefaultAzureCredential()
 
     def _get_model(self, agent_config: Optional[Dict[str, Any]]) -> Optional[str]:
@@ -153,7 +162,7 @@ class VoiceProxyHandler:
             return None
         if agent_config:
             return agent_config.get("model", config["model_deployment_name"])
-        if config["agent_id"]:
+        if config["agent_name"] or config["agent_id"]:
             return None
         return config["model_deployment_name"]
 
@@ -161,14 +170,34 @@ class VoiceProxyHandler:
         """Build additional query parameters for the connection."""
         params: Dict[str, str] = {}
 
-        if agent_config and agent_config.get("is_azure_agent"):
+        if agent_config and agent_config.get("is_azure_agent") and not agent_config.get("azure_agent_name"):
             params["agent-id"] = agent_id or ""
             project_name = config["azure_ai_project_name"]
             if project_name:
                 params["agent-project-name"] = project_name
-        elif not agent_config and config["agent_id"]:
+        elif not agent_config and not config["agent_name"] and config["agent_id"]:
             params["agent-id"] = config["agent_id"]
 
+        return params
+
+    def _build_agent_connection_params(self, agent_config: Optional[Dict[str, Any]]) -> Dict[str, str]:
+        """Connect to the exact Foundry agent version created for this scenario."""
+        agent_name = agent_config.get("azure_agent_name") if agent_config else config["agent_name"]
+        agent_version = agent_config.get("azure_agent_version") if agent_config else config["agent_version"]
+        if not agent_name:
+            return {}
+
+        project_name = config["azure_ai_project_name"]
+        if not project_name:
+            project_path = urlsplit(config["project_endpoint"] or "").path.rstrip("/")
+            if "/api/projects/" in project_path:
+                project_name = project_path.rsplit("/", 1)[-1]
+        if not project_name:
+            raise ValueError("A Foundry agent requires AZURE_AI_PROJECT_NAME or a valid PROJECT_ENDPOINT")
+
+        params = {"agent_name": agent_name, "project_name": project_name}
+        if agent_version:
+            params["agent_version"] = agent_version
         return params
 
     async def _send_initial_config(
@@ -200,26 +229,31 @@ class VoiceProxyHandler:
 
         return self._create_request_session(voice_name, voice_type, avatar_config_value, agent_config)
 
-    def _build_avatar_config(self, character: str, style: str, is_photo: bool) -> Any:
+    def _build_avatar_config(self, character: str, style: str, is_photo: bool) -> AvatarConfig:
         """Build avatar configuration for photo or video avatars."""
         if is_photo:
-            return {
-                "type": "photo-avatar",
-                "model": "vasa-1",
-                "character": character,
-                "customized": False,
-            }
-        return AvatarConfig(
+            return AvatarConfig(
+                avatar_type=AvatarConfigTypes.PHOTO_AVATAR,
+                model="vasa-1",
+                character=character,
+                customized=False,
+                output_protocol=AvatarOutputProtocol.WEBRTC,
+            )
+        avatar = AvatarConfig(
+            avatar_type=AvatarConfigTypes.VIDEO_AVATAR,
             character=character,
-            style=style if style else None,
             customized=False,
+            output_protocol=AvatarOutputProtocol.WEBRTC,
         )
+        if style:
+            avatar.style = style
+        return avatar
 
     def _create_request_session(
         self,
         voice_name: str,
         voice_type: str,
-        avatar_config_value: Any,
+        avatar_config_value: AvatarConfig,
         agent_config: Optional[Dict[str, Any]],
     ) -> RequestSession:
         """Create the RequestSession with all configuration."""

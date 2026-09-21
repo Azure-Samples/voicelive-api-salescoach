@@ -12,7 +12,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components'
-import { useCallback, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { AssessmentPanel } from '../components/AssessmentPanel'
 import { ChatPanel } from '../components/ChatPanel'
 import { ScenarioList } from '../components/ScenarioList'
@@ -84,34 +84,45 @@ export default function App() {
     scenarios.find(s => s.id === selectedScenario) ||
     null
 
-  const handleWebRTCMessage = useCallback((msg: any) => {
-    if (msg.type === 'session.updated') {
-      const session = msg.session
-      const servers =
-        session?.avatar?.ice_servers ||
-        session?.rtc?.ice_servers ||
-        session?.ice_servers
-      const username =
-        session?.avatar?.username ||
-        session?.avatar?.ice_username ||
-        session?.rtc?.ice_username ||
-        session?.ice_username
-      const credential =
-        session?.avatar?.credential ||
-        session?.avatar?.ice_credential ||
-        session?.rtc?.ice_credential ||
-        session?.ice_credential
-
-      if (servers) {
-        setupWebRTC(servers, username, credential)
-      }
-    } else if (
-      (msg.server_sdp || msg.sdp || msg.answer) &&
-      msg.type !== 'session.update'
-    ) {
-      handleAnswer(msg)
-    }
+  // Bridge WebRTC offers to the socket without a circular hook dependency.
+  const sendRef = useRef<ReturnType<typeof useRealtime>['send'] | null>(null)
+  const sendOffer = useCallback((sdp: string) => {
+    sendRef.current?.({ type: 'session.avatar.connect', client_sdp: sdp })
   }, [])
+
+  const { setupWebRTC, handleAnswer, videoRef } = useWebRTC(sendOffer)
+
+  const handleWebRTCMessage = useCallback(
+    (msg: any) => {
+      if (msg.type === 'session.updated') {
+        const session = msg.session
+        const servers =
+          session?.avatar?.ice_servers ||
+          session?.rtc?.ice_servers ||
+          session?.ice_servers
+        const username =
+          session?.avatar?.username ||
+          session?.avatar?.ice_username ||
+          session?.rtc?.ice_username ||
+          session?.ice_username
+        const credential =
+          session?.avatar?.credential ||
+          session?.avatar?.ice_credential ||
+          session?.rtc?.ice_credential ||
+          session?.ice_credential
+
+        if (servers) {
+          setupWebRTC(servers, username, credential)
+        }
+      } else if (
+        (msg.server_sdp || msg.sdp || msg.answer) &&
+        msg.type !== 'session.update'
+      ) {
+        handleAnswer(msg)
+      }
+    },
+    [setupWebRTC, handleAnswer]
+  )
 
   const { connected, messages, send, clearMessages, getRecordings } =
     useRealtime({
@@ -120,14 +131,12 @@ export default function App() {
       onAudioDelta: playAudio,
     })
 
-  const sendOffer = useCallback(
-    (sdp: string) => {
-      send({ type: 'session.avatar.connect', client_sdp: sdp })
-    },
-    [send]
-  )
-
-  const { setupWebRTC, handleAnswer, videoRef } = useWebRTC(sendOffer)
+  useLayoutEffect(() => {
+    sendRef.current = send
+    return () => {
+      sendRef.current = null
+    }
+  }, [send])
 
   const sendAudioChunk = useCallback(
     (base64: string) => {

@@ -6,13 +6,13 @@ export default defineConfig({
   build: {
     outDir: 'static',
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       input: 'index.html',
       output: {
         entryFileNames: 'js/index.js',
         chunkFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name?.endsWith('.css')) {
+          if (assetInfo.names.some(name => name.endsWith('.css'))) {
             return 'assets/index.css'
           }
           return 'assets/[name]-[hash].[ext]'

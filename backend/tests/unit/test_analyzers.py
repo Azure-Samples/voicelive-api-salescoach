@@ -52,18 +52,33 @@ class TestConversationAnalyzer:
         analyzer = ConversationAnalyzer()
         assert analyzer.openai_client is None
 
-    @patch("src.services.analyzers.AzureOpenAI")
+    @pytest.mark.parametrize("endpoint", ["https://test.openai.azure.com", "https://test.openai.azure.com/"])
+    @patch("src.services.analyzers.OpenAI")
     @patch("src.services.analyzers.config")
-    def test_initialize_openai_client_success(self, mock_config, mock_azure_openai):
+    def test_initialize_openai_client_success(self, mock_config, mock_openai, endpoint):
         """Test successful OpenAI client initialization."""
         mock_config.__getitem__.side_effect = lambda key: {
-            "azure_openai_endpoint": "https://test.openai.azure.com",
+            "azure_openai_endpoint": endpoint,
             "azure_openai_api_key": "test-key",
         }.get(key, "")
 
         analyzer = ConversationAnalyzer()
         assert analyzer.openai_client is not None
-        mock_azure_openai.assert_called_once()
+        mock_openai.assert_called_once_with(base_url="https://test.openai.azure.com/openai/v1/", api_key="test-key")
+
+    @patch("src.services.analyzers.get_bearer_token_provider")
+    @patch("src.services.analyzers.OpenAI")
+    @patch("src.services.analyzers.config")
+    def test_initialize_openai_client_managed_identity(self, mock_config, mock_openai, mock_provider):
+        mock_config.__getitem__.side_effect = {
+            "azure_openai_endpoint": "https://test.openai.azure.com/",
+            "azure_openai_api_key": "",
+        }.__getitem__
+        ConversationAnalyzer()
+        assert mock_provider.call_args.args[1] == "https://ai.azure.com/.default"
+        mock_openai.assert_called_once_with(
+            base_url="https://test.openai.azure.com/openai/v1/", api_key=mock_provider.return_value
+        )
 
     @pytest.mark.asyncio
     async def test_analyze_conversation_uses_fallback_for_unknown_scenario(self):
@@ -152,7 +167,6 @@ class TestConversationAnalyzer:
             mock_config.__getitem__.side_effect = lambda key: {
                 "azure_openai_endpoint": "https://test.openai.azure.com",
                 "azure_openai_api_key": "test-key",
-                "api_version": "2024-02-01",
                 "model_deployment_name": "gpt-4",
             }.get(key, "test-value")
 

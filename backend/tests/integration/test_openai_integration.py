@@ -15,7 +15,7 @@ from tests.conftest import requires_azure
 def openai_client(azure_env):
     """Create a real Azure OpenAI client using deployed credentials."""
     from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-    from openai import AzureOpenAI
+    from openai import OpenAI
 
     endpoint = azure_env["endpoint"]
     if not endpoint:
@@ -23,19 +23,15 @@ def openai_client(azure_env):
 
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     if api_key and api_key.strip():
-        return AzureOpenAI(
-            api_version="2024-12-01-preview",
-            azure_endpoint=endpoint,
+        return OpenAI(
+            base_url=f"{endpoint.rstrip('/')}/openai/v1/",
             api_key=api_key,
         )
     else:
-        token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
-        )
-        return AzureOpenAI(
-            api_version="2024-12-01-preview",
-            azure_endpoint=endpoint,
-            azure_ad_token_provider=token_provider,
+        token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://ai.azure.com/.default")
+        return OpenAI(
+            base_url=f"{endpoint.rstrip('/')}/openai/v1/",
+            api_key=token_provider,
         )
 
 
@@ -107,7 +103,7 @@ class TestOpenAIIntegration:
         User: We'd like to start the migration within Q2 this year.
         """
 
-        response = openai_client.beta.chat.completions.parse(
+        response = openai_client.chat.completions.parse(
             model=os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-4o"),
             messages=[
                 {
